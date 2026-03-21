@@ -1,0 +1,2 @@
+# Einheitliche Zeilenenden im Repo (weniger CRLF/LF-Warnungen unter Windows)
+* text=auto eol=lf
