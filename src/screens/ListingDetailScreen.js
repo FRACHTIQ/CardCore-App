@@ -36,13 +36,12 @@ export default function ListingDetailScreen({ navigation, route }) {
     try {
       const opts = token ? { token } : {};
       const data = await api(`/api/listings/${id}`, opts);
-      setListing(data.listing);
-      if (token) {
-        const favData = await api("/api/favorites", { token });
-        const ids = new Set(
-          (favData.favorites || []).map((f) => f.id)
-        );
-        setIsFavorite(ids.has(id));
+      const row = data.listing;
+      setListing(row);
+      if (row && typeof row.is_favorited === "boolean") {
+        setIsFavorite(row.is_favorited);
+      } else {
+        setIsFavorite(false);
       }
     } catch (e) {
       setError(e.message || "Fehler");
@@ -67,12 +66,18 @@ export default function ListingDetailScreen({ navigation, route }) {
           method: "DELETE",
         });
         setIsFavorite(false);
+        if (listing) {
+          setListing({ ...listing, is_favorited: false });
+        }
       } else {
         await api(`/api/favorites/${listing.id}`, {
           token,
           method: "POST",
         });
         setIsFavorite(true);
+        if (listing) {
+          setListing({ ...listing, is_favorited: true });
+        }
       }
     } catch (e) {
       setError(e.message || "Fehler");
@@ -94,7 +99,7 @@ export default function ListingDetailScreen({ navigation, route }) {
       });
       const cid = data.conversation && data.conversation.id;
       if (cid) {
-        navigation.getParent()?.navigate("Messages", {
+        navigation.navigate("Messages", {
           conversationId: cid,
         });
       }
@@ -162,7 +167,7 @@ export default function ListingDetailScreen({ navigation, route }) {
       </View>
       <Pressable
         onPress={() =>
-          navigation.getParent()?.navigate("Profile", {
+          navigation.navigate("Profile", {
             userId: listing.seller_id,
           })
         }

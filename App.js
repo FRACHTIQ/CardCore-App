@@ -12,9 +12,11 @@ import ListingDetailScreen from "./src/screens/ListingDetailScreen";
 import CreateListingScreen from "./src/screens/CreateListingScreen";
 import MessagesScreen from "./src/screens/MessagesScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
+import FavoritesScreen from "./src/screens/FavoritesScreen";
 
 const AuthStack = createNativeStackNavigator();
 const HomeStack = createNativeStackNavigator();
+const FavoriteStack = createNativeStackNavigator();
 const MainTabs = createBottomTabNavigator();
 
 function AuthNavigator() {
@@ -64,6 +66,29 @@ function HomeStackNavigator() {
   );
 }
 
+function FavoriteStackNavigator() {
+  return (
+    <FavoriteStack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: "#fff" },
+        headerTintColor: "#111",
+        headerShadowVisible: false,
+      }}
+    >
+      <FavoriteStack.Screen
+        name="FavoritesMain"
+        component={FavoritesScreen}
+        options={{ title: "Merkzettel" }}
+      />
+      <FavoriteStack.Screen
+        name="ListingDetail"
+        component={ListingDetailScreen}
+        options={{ title: "Listing" }}
+      />
+    </FavoriteStack.Navigator>
+  );
+}
+
 function MainNavigator() {
   return (
     <MainTabs.Navigator
@@ -79,6 +104,11 @@ function MainNavigator() {
         name="Home"
         component={HomeStackNavigator}
         options={{ tabBarLabel: "Marktplatz" }}
+      />
+      <MainTabs.Screen
+        name="Merkzettel"
+        component={FavoriteStackNavigator}
+        options={{ tabBarLabel: "Merkzettel" }}
       />
       <MainTabs.Screen
         name="Messages"
