@@ -13,6 +13,8 @@ import SupportTicketDetailScreen from "../screens/SupportTicketDetailScreen";
 import AdminPanelScreen from "../screens/AdminPanelScreen";
 import AdminSupportListScreen from "../screens/AdminSupportListScreen";
 import AdminSupportDetailScreen from "../screens/AdminSupportDetailScreen";
+import AdminReportsListScreen from "../screens/AdminReportsListScreen";
+import AdminReportDetailScreen from "../screens/AdminReportDetailScreen";
 import DealsListScreen from "../screens/DealsListScreen";
 import DealDetailScreen from "../screens/DealDetailScreen";
 
@@ -92,6 +94,16 @@ export function ProfileStackNavigator() {
         name="AdminSupportList"
         component={AdminSupportListScreen}
         options={{ title: t("admin.supportListTitle") }}
+      />
+      <ProfileStack.Screen
+        name="AdminReportsList"
+        component={AdminReportsListScreen}
+        options={{ title: t("admin.reportsListTitle") }}
+      />
+      <ProfileStack.Screen
+        name="AdminReportDetail"
+        component={AdminReportDetailScreen}
+        options={{ title: t("admin.reportsListTitle") }}
       />
       <ProfileStack.Screen
         name="AdminSupportDetail"

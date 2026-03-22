@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { useFocusEffect } from "@react-navigation/native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import {
+  ActionSheetIOS,
   ActivityIndicator,
   Alert,
   FlatList,
@@ -27,6 +28,7 @@ import { useAuth } from "../AuthContext";
 import { profileInitial } from "../utils/profileInitial";
 import { getMessageReads, setMessageRead } from "../utils/messageReadState";
 import { pickChatImageDataUrl } from "../utils/pickChatImage";
+import { ReportUserSheet } from "../components/ReportUserSheet";
 
 const POLL_CONV_MS = 20000;
 const POLL_MSG_MS = 4000;
@@ -125,6 +127,8 @@ export default function MessagesScreen({ navigation, route }) {
   const [showEmojiRow, setShowEmojiRow] = useState(false);
   const [pendingImage, setPendingImage] = useState(null);
   const [readMap, setReadMap] = useState({});
+  const [reportVisible, setReportVisible] = useState(false);
+  const [reportForUserId, setReportForUserId] = useState(null);
 
   const relativeTime = useCallback(
     (iso) => {
@@ -273,6 +277,95 @@ export default function MessagesScreen({ navigation, route }) {
     loadConversations();
   }, [loadConversations]);
 
+  const showThreadMenu = useCallback(() => {
+    const conv = conversations.find((c) => c.id === threadId);
+    const oid = conv?.other_user_id;
+    if (oid == null || !token) {
+      return;
+    }
+
+    const goProfile = () => {
+      navigation.navigate("Profile", {
+        screen: "ProfilePublicUser",
+        params: { userId: oid },
+      });
+    };
+
+    const runBlock = () => {
+      Alert.alert(
+        t("messages.blockConfirmTitle"),
+        t("messages.blockConfirmBody"),
+        [
+          { text: t("common.cancel"), style: "cancel" },
+          {
+            text: t("messages.blockConfirmOk"),
+            style: "destructive",
+            onPress: async () => {
+              try {
+                await api(`/api/users/${oid}/block`, {
+                  token,
+                  method: "POST",
+                });
+                setThreadId(null);
+                await loadConversations();
+              } catch (e) {
+                setError(e.message || t("common.error"));
+              }
+            },
+          },
+        ]
+      );
+    };
+
+    const openReport = () => {
+      setReportForUserId(oid);
+      setReportVisible(true);
+    };
+
+    if (Platform.OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: [
+            t("messages.openProfile"),
+            t("messages.blockUser"),
+            t("messages.reportUser"),
+            t("common.cancel"),
+          ],
+          cancelButtonIndex: 3,
+          destructiveButtonIndex: 1,
+        },
+        (idx) => {
+          if (idx === 0) {
+            goProfile();
+          } else if (idx === 1) {
+            runBlock();
+          } else if (idx === 2) {
+            openReport();
+          }
+        }
+      );
+    } else {
+      Alert.alert(t("messages.threadMenuTitle"), undefined, [
+        { text: t("common.cancel"), style: "cancel" },
+        { text: t("messages.openProfile"), onPress: goProfile },
+        {
+          text: t("messages.moreActions"),
+          onPress: () => {
+            Alert.alert(t("messages.safetyTitle"), undefined, [
+              { text: t("common.cancel"), style: "cancel" },
+              {
+                text: t("messages.blockUser"),
+                style: "destructive",
+                onPress: runBlock,
+              },
+              { text: t("messages.reportUser"), onPress: openReport },
+            ]);
+          },
+        },
+      ]);
+    }
+  }, [threadId, conversations, token, navigation, t, loadConversations]);
+
   useLayoutEffect(() => {
     if (threadId) {
       const thread = conversations.find((c) => c.id === threadId);
@@ -280,6 +373,7 @@ export default function MessagesScreen({ navigation, route }) {
         thread && thread.other_display_name
           ? thread.other_display_name
           : thread?.listing_player_name || t("messages.chatTitle");
+      const canMenu = thread && thread.other_user_id != null;
       navigation.setOptions({
         title,
         headerLeft: () => (
@@ -293,14 +387,33 @@ export default function MessagesScreen({ navigation, route }) {
             <Ionicons name="chevron-back" size={26} color={Theme.text} />
           </Pressable>
         ),
+        headerRight:
+          canMenu && token
+            ? () => (
+                <Pressable
+                  onPress={showThreadMenu}
+                  style={styles.headerMenuBtn}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("messages.threadMenuA11y")}
+                >
+                  <Ionicons
+                    name="ellipsis-horizontal"
+                    size={24}
+                    color={Theme.text}
+                  />
+                </Pressable>
+              )
+            : undefined,
       });
     } else {
       navigation.setOptions({
         title: t("tabs.messages"),
         headerLeft: undefined,
+        headerRight: undefined,
       });
     }
-  }, [threadId, conversations, navigation, t]);
+  }, [threadId, conversations, navigation, t, token, showThreadMenu]);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -334,6 +447,38 @@ export default function MessagesScreen({ navigation, route }) {
       setError(e.message || t("common.error"));
     }
   }, [threadId, token, t]);
+
+  const requestDeleteMessage = useCallback(
+    (msg) => {
+      if (!token || !threadId || !msg?.id) {
+        return;
+      }
+      Alert.alert(
+        t("messages.deleteConfirmTitle"),
+        t("messages.deleteConfirmBody"),
+        [
+          { text: t("common.cancel"), style: "cancel" },
+          {
+            text: t("messages.deleteConfirmOk"),
+            style: "destructive",
+            onPress: async () => {
+              try {
+                await api(
+                  `/api/conversations/${threadId}/messages/${msg.id}`,
+                  { token, method: "DELETE" }
+                );
+                await loadMessages();
+                await loadConversations();
+              } catch (e) {
+                setError(e.message || t("common.error"));
+              }
+            },
+          },
+        ]
+      );
+    },
+    [token, threadId, t, loadMessages, loadConversations]
+  );
 
   useEffect(() => {
     loadMessages();
@@ -556,6 +701,16 @@ export default function MessagesScreen({ navigation, route }) {
           </View>
         ) : null}
         {error ? <Text style={styles.errorBanner}>{error}</Text> : null}
+        <ReportUserSheet
+          visible={reportVisible}
+          userId={reportForUserId}
+          token={token}
+          onClose={() => {
+            setReportVisible(false);
+            setReportForUserId(null);
+          }}
+          onReported={() => {}}
+        />
         <View style={styles.threadBody}>
           <ScrollView
             ref={scrollRef}
@@ -579,39 +734,45 @@ export default function MessagesScreen({ navigation, route }) {
                     mine ? styles.bubbleRowMine : styles.bubbleRowOther,
                   ]}
                 >
-                  <View
-                    style={[
-                      styles.bubble,
-                      mine ? styles.bubbleMine : styles.bubbleOther,
-                    ]}
+                  <Pressable
+                    onLongPress={() => mine && requestDeleteMessage(m)}
+                    delayLongPress={450}
+                    disabled={!mine}
                   >
-                    {m.image_url ? (
-                      <Image
-                        source={{ uri: m.image_url }}
-                        style={styles.bubbleImage}
-                        resizeMode="cover"
-                        accessibilityIgnoresInvertColors
-                      />
-                    ) : null}
-                    {m.body ? (
-                      <Text
-                        style={[
-                          styles.bubbleText,
-                          mine ? styles.bubbleTextMine : styles.bubbleTextOther,
-                        ]}
-                      >
-                        {m.body}
-                      </Text>
-                    ) : null}
-                    <Text
+                    <View
                       style={[
-                        styles.bubbleTime,
-                        mine ? styles.bubbleTimeMine : styles.bubbleTimeOther,
+                        styles.bubble,
+                        mine ? styles.bubbleMine : styles.bubbleOther,
                       ]}
                     >
-                      {formatMsgClock(m.created_at)}
-                    </Text>
-                  </View>
+                      {m.image_url ? (
+                        <Image
+                          source={{ uri: m.image_url }}
+                          style={styles.bubbleImage}
+                          resizeMode="cover"
+                          accessibilityIgnoresInvertColors
+                        />
+                      ) : null}
+                      {m.body ? (
+                        <Text
+                          style={[
+                            styles.bubbleText,
+                            mine ? styles.bubbleTextMine : styles.bubbleTextOther,
+                          ]}
+                        >
+                          {m.body}
+                        </Text>
+                      ) : null}
+                      <Text
+                        style={[
+                          styles.bubbleTime,
+                          mine ? styles.bubbleTimeMine : styles.bubbleTimeOther,
+                        ]}
+                      >
+                        {formatMsgClock(m.created_at)}
+                      </Text>
+                    </View>
+                  </Pressable>
                 </View>
               );
             })}
@@ -980,6 +1141,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     paddingVertical: 8,
     marginLeft: 4,
+  },
+  headerMenuBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginRight: 4,
   },
   threadRoot: { flex: 1, backgroundColor: Theme.bg },
   /** Scroll + Eingabe gemeinsam füllen, Leiste sitzt unten am Inhaltsbereich (über Tab-Bar). */

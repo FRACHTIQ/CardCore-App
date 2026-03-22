@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Linking,
   Pressable,
@@ -15,6 +16,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { Theme } from "../theme";
 import { api } from "../api";
+import { useAuth } from "../AuthContext";
+import { ReportUserSheet } from "../components/ReportUserSheet";
 import { profileInitial } from "../utils/profileInitial";
 import { resolveUserAvatarUri } from "../utils/resolveUserAvatarUri";
 import { formatProfilePresence } from "../utils/formatPresence";
@@ -22,6 +25,7 @@ import { SOCIAL_PLATFORM_ORDER } from "../utils/socialPlatforms";
 
 export default function ProfilePublicViewScreen({ route, navigation }) {
   const { t, i18n } = useTranslation();
+  const { token } = useAuth();
   const insets = useSafeAreaInsets();
   const rawUserId = route.params?.userId;
   const userId =
@@ -32,6 +36,32 @@ export default function ProfilePublicViewScreen({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [profile, setProfile] = useState(null);
+  const [myUserId, setMyUserId] = useState(null);
+  const [reportVisible, setReportVisible] = useState(false);
+  const [blockBusy, setBlockBusy] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!token) {
+      setMyUserId(null);
+      return;
+    }
+    (async () => {
+      try {
+        const data = await api("/api/users/me", { token });
+        if (!cancelled && data?.user?.id != null) {
+          setMyUserId(data.user.id);
+        }
+      } catch {
+        if (!cancelled) {
+          setMyUserId(null);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   const load = useCallback(async () => {
     if (!Number.isInteger(userId) || userId < 1) {
@@ -41,7 +71,7 @@ export default function ProfilePublicViewScreen({ route, navigation }) {
     }
     setError("");
     try {
-      const data = await api(`/api/users/${userId}`);
+      const data = await api(`/api/users/${userId}`, token ? { token } : {});
       setProfile(data.profile);
     } catch (e) {
       setError(e.message || t("common.error"));
@@ -49,7 +79,7 @@ export default function ProfilePublicViewScreen({ route, navigation }) {
     } finally {
       setLoading(false);
     }
-  }, [userId, t]);
+  }, [userId, t, token]);
 
   useEffect(() => {
     setLoading(true);
@@ -86,6 +116,50 @@ export default function ProfilePublicViewScreen({ route, navigation }) {
 
   const initial = profileInitial(profile.display_name, null);
   const avatarUri = resolveUserAvatarUri(profile?.avatar_url);
+  const isSelf = myUserId != null && myUserId === userId;
+  const showSafety =
+    token && myUserId != null && !isSelf && Number.isInteger(userId);
+
+  async function toggleBlock() {
+    if (!token || !showSafety) {
+      return;
+    }
+    const blocking = !profile.viewer_has_blocked;
+    const title = blocking
+      ? t("profile.blockConfirmTitle")
+      : t("profile.unblockConfirmTitle");
+    const body = blocking
+      ? t("profile.blockConfirmBody")
+      : t("profile.unblockConfirmBody");
+    Alert.alert(title, body, [
+      { text: t("common.cancel"), style: "cancel" },
+      {
+        text: blocking ? t("profile.blockConfirmOk") : t("profile.unblockConfirmOk"),
+        style: blocking ? "destructive" : "default",
+        onPress: async () => {
+          setBlockBusy(true);
+          try {
+            if (blocking) {
+              await api(`/api/users/${userId}/block`, {
+                token,
+                method: "POST",
+              });
+            } else {
+              await api(`/api/users/${userId}/block`, {
+                token,
+                method: "DELETE",
+              });
+            }
+            await load();
+          } catch (e) {
+            Alert.alert(t("common.error"), e.message || t("common.error"));
+          } finally {
+            setBlockBusy(false);
+          }
+        },
+      },
+    ]);
+  }
 
   return (
     <ScrollView
@@ -192,6 +266,54 @@ export default function ProfilePublicViewScreen({ route, navigation }) {
         </View>
         <Text style={styles.publicBio}>{profile.bio || "—"}</Text>
       </View>
+
+      {showSafety ? (
+        <View style={styles.safetyCard}>
+          <Text style={styles.safetyTitle}>{t("profile.safetyTitle")}</Text>
+          <View style={styles.safetyRow}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.safetyBtn,
+                profile.viewer_has_blocked ? styles.safetyBtnNeutral : styles.safetyBtnDanger,
+                pressed ? styles.safetyBtnPressed : null,
+                blockBusy ? styles.safetyBtnDisabled : null,
+              ]}
+              onPress={toggleBlock}
+              disabled={blockBusy}
+            >
+              <Ionicons
+                name={profile.viewer_has_blocked ? "lock-open-outline" : "ban-outline"}
+                size={18}
+                color={Theme.text}
+              />
+              <Text style={styles.safetyBtnText}>
+                {profile.viewer_has_blocked
+                  ? t("profile.unblockUser")
+                  : t("profile.blockUser")}
+              </Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [
+                styles.safetyBtn,
+                styles.safetyBtnOutline,
+                pressed ? styles.safetyBtnPressed : null,
+              ]}
+              onPress={() => setReportVisible(true)}
+            >
+              <Ionicons name="flag-outline" size={18} color={Theme.text} />
+              <Text style={styles.safetyBtnText}>{t("profile.reportUser")}</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
+
+      <ReportUserSheet
+        visible={reportVisible}
+        userId={userId}
+        token={token}
+        onClose={() => setReportVisible(false)}
+        onReported={() => load()}
+      />
     </ScrollView>
   );
 }
@@ -368,6 +490,44 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: Theme.text,
   },
+  safetyCard: {
+    marginTop: 8,
+    padding: 16,
+    backgroundColor: Theme.surface,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Theme.line,
+    marginBottom: 16,
+  },
+  safetyTitle: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: Theme.sub,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: 12,
+  },
+  safetyRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  safetyBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    minWidth: "47%",
+    flexGrow: 1,
+  },
+  safetyBtnDanger: { backgroundColor: "rgba(220,38,38,0.12)" },
+  safetyBtnNeutral: { backgroundColor: Theme.soft },
+  safetyBtnOutline: {
+    backgroundColor: Theme.bg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Theme.line,
+  },
+  safetyBtnPressed: { opacity: 0.88 },
+  safetyBtnDisabled: { opacity: 0.55 },
+  safetyBtnText: { fontSize: 14, fontWeight: "700", color: Theme.text },
   error: { color: Theme.error, marginBottom: 12, textAlign: "center" },
   backRow: {
     flexDirection: "row",

@@ -149,8 +149,26 @@ export default function AdminPanelScreen({ navigation }) {
             <Text style={styles.kpiLabel}>{t("admin.kpiSupport")}</Text>
             <Text style={styles.kpiVal}>{dash.support_open}</Text>
           </View>
+          <View style={styles.kpi}>
+            <Text style={styles.kpiLabel}>{t("admin.kpiReports")}</Text>
+            <Text style={styles.kpiVal}>
+              {dash.reports_open != null ? dash.reports_open : "—"}
+            </Text>
+          </View>
         </View>
       ) : null}
+
+      <Pressable
+        style={({ pressed }) => [
+          styles.supportBtn,
+          pressed ? styles.supportBtnPressed : null,
+        ]}
+        onPress={() => navigation.navigate("AdminReportsList")}
+      >
+        <Ionicons name="flag-outline" size={22} color={Theme.onWhite} />
+        <Text style={styles.supportBtnText}>{t("admin.openReports")}</Text>
+        <Ionicons name="chevron-forward" size={20} color={Theme.onWhite} />
+      </Pressable>
 
       <Pressable
         style={({ pressed }) => [
