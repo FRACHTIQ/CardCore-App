@@ -305,6 +305,7 @@
     "viewAll": "View all",
     "allOffers": "ALL LISTINGS",
     "highlightTrending": "🔥 Trending cards",
+    "highlightDiscover": "✨ New & discover",
     "highlightNew": "⚡ Just listed",
     "dealBelow": "{{pct}}% below market",
     "dealAbove": "{{pct}}% above market",
@@ -317,9 +318,7 @@
     "badgeHot": "📈 In demand",
     "signInToSave": "Sign in to save listings.",
     "signInToMessage": "Sign in to send a message.",
-    "offersCountLabel": "{{count}} listings",
-    "mockCardsHint": "Sample · Football cards",
-    "emptyMockHint": "The cards above are demos — real listings show up when there are matches."
+    "offersCountLabel": "{{count}} listings"
   },
   "profile": {
     "pleaseSignIn": "Please sign in.",

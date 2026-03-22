@@ -12,7 +12,7 @@ import { useTranslation } from "react-i18next";
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 import { Theme } from "../theme";
-import { APP_UPDATE_STORE_URL } from "../config";
+import { resolveStoreUpdateUrl } from "../config";
 
 /**
  * Hinweis-Modal: neue Version verfügbar — Update oder Später.
@@ -31,7 +31,7 @@ export default function UpdateAvailableModal({
     "1.0.0";
 
   function openStore() {
-    const u = String(APP_UPDATE_STORE_URL || "").trim();
+    const u = resolveStoreUpdateUrl();
     if (u) {
       Linking.openURL(u).catch(() => {});
       return;

@@ -18,7 +18,6 @@ import {
   View,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -32,52 +31,6 @@ import { resolveUserAvatarUri } from "../utils/resolveUserAvatarUri";
 
 const POLL_MS = 30000;
 const SEARCH_DEBOUNCE_MS = 400;
-
-/** Dekorative Fußball-Karten-Mockups (keine echten Listings). */
-const MOCK_SOCCER_CARDS = [
-  {
-    id: "mock-1",
-    name: "J. Musiala",
-    club: "FC Bayern",
-    rating: 91,
-    colors: ["#b91c1c", "#7f1d1d"],
-  },
-  {
-    id: "mock-2",
-    name: "F. Wirtz",
-    club: "Bayer 04",
-    rating: 90,
-    colors: ["#111827", "#1d4ed8"],
-  },
-  {
-    id: "mock-3",
-    name: "L. Sané",
-    club: "FC Bayern",
-    rating: 89,
-    colors: ["#7c2d12", "#c2410c"],
-  },
-  {
-    id: "mock-4",
-    name: "K. Havertz",
-    club: "Arsenal FC",
-    rating: 87,
-    colors: ["#dc2626", "#7f1d1d"],
-  },
-  {
-    id: "mock-5",
-    name: "İ. Gündoğan",
-    club: "Manchester City",
-    rating: 88,
-    colors: ["#6b21a8", "#4c1d95"],
-  },
-  {
-    id: "mock-6",
-    name: "T. Müller",
-    club: "FC Bayern",
-    rating: 86,
-    colors: ["#0f766e", "#134e4a"],
-  },
-];
 
 function formatPrice(cents, currency) {
   const c = Number(cents) || 0;
@@ -186,6 +139,21 @@ export default function HomeScreen({ navigation }) {
   const [appliedSort, setAppliedSort] = useState("updated_at_desc");
   const [meUser, setMeUser] = useState(null);
   const [timeTick, setTimeTick] = useState(0);
+  /** Ungefilterte „Entdecken“-Karten (immer neueste), unabhängig von Suche/Filtern. */
+  const [featuredStrip, setFeaturedStrip] = useState([]);
+
+  const loadFeatured = useCallback(async () => {
+    try {
+      const data = await api("/api/listings?limit=8", token ? { token } : {});
+      setFeaturedStrip(data.listings || []);
+    } catch {
+      setFeaturedStrip([]);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    loadFeatured();
+  }, [loadFeatured]);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -197,6 +165,7 @@ export default function HomeScreen({ navigation }) {
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
+      loadFeatured();
       (async () => {
         if (!token) {
           if (!cancelled) {
@@ -218,7 +187,7 @@ export default function HomeScreen({ navigation }) {
       return () => {
         cancelled = true;
       };
-    }, [token])
+    }, [token, loadFeatured])
   );
 
   useEffect(() => {
@@ -347,6 +316,7 @@ export default function HomeScreen({ navigation }) {
 
   function onRefresh() {
     setRefreshing(true);
+    loadFeatured();
     load();
   }
 
@@ -404,6 +374,11 @@ export default function HomeScreen({ navigation }) {
           method: next ? "POST" : "DELETE",
         });
         setListings((prev) =>
+          prev.map((l) =>
+            l.id === item.id ? { ...l, is_favorited: next } : l
+          )
+        );
+        setFeaturedStrip((prev) =>
           prev.map((l) =>
             l.id === item.id ? { ...l, is_favorited: next } : l
           )
@@ -571,6 +546,18 @@ export default function HomeScreen({ navigation }) {
   const dashAvatarUri = meUser ? resolveUserAvatarUri(meUser.avatar_url) : null;
   const dashAvatarLetter = profileInitial(meUser?.display_name, meUser?.email);
 
+  const highlightItems = useMemo(
+    () =>
+      featuredStrip.length > 0
+        ? featuredStrip.slice(0, 4)
+        : listings.slice(0, 4),
+    [featuredStrip, listings]
+  );
+  const highlightTitleKey =
+    featuredStrip.length > 0
+      ? "home.highlightDiscover"
+      : "home.highlightTrending";
+
   const listHeader = (
     <View style={{ paddingTop: insets.top + 6 }}>
       <View style={styles.dashTop}>
@@ -663,15 +650,15 @@ export default function HomeScreen({ navigation }) {
         </Text>
       </View>
 
-      {listings.length > 0 ? (
+      {highlightItems.length > 0 ? (
         <View style={styles.highlightSection}>
-          <Text style={styles.highlightTitle}>{t("home.highlightTrending")}</Text>
+          <Text style={styles.highlightTitle}>{t(highlightTitleKey)}</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.highlightScroll}
           >
-            {listings.slice(0, 4).map((item) => {
+            {highlightItems.map((item) => {
               const thumb = getListingThumbnailUri(item);
               return (
                 <Pressable
@@ -700,51 +687,6 @@ export default function HomeScreen({ navigation }) {
           </ScrollView>
         </View>
       ) : null}
-
-      {!loading && !error && listings.length === 0 ? (
-        <View style={styles.mockSection}>
-          <Text style={styles.mockSectionHint}>{t("home.mockCardsHint")}</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.mockScroll}
-          >
-            {MOCK_SOCCER_CARDS.map((m) => (
-              <Pressable
-                key={m.id}
-                style={({ pressed }) => [
-                  styles.mockCardOuter,
-                  pressed ? styles.mockCardPressed : null,
-                ]}
-                accessibilityRole="image"
-                accessibilityLabel={`${m.name}, ${m.club}`}
-              >
-                <LinearGradient
-                  colors={m.colors}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.mockCardGrad}
-                >
-                  <Text style={styles.mockCardRating}>
-                    {m.rating != null ? String(m.rating) : "—"}
-                  </Text>
-                  <View style={styles.mockCardMid}>
-                    <Text style={styles.mockCardEmoji}>⚽</Text>
-                  </View>
-                  <View>
-                    <Text style={styles.mockCardName} numberOfLines={2}>
-                      {m.name}
-                    </Text>
-                    <Text style={styles.mockCardClub} numberOfLines={1}>
-                      {m.club}
-                    </Text>
-                  </View>
-                </LinearGradient>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </View>
-      ) : null}
     </View>
   );
 
@@ -764,7 +706,6 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.emptyWrap}>
         <Text style={styles.emptyTitle}>{t("home.emptyTitle")}</Text>
         <Text style={styles.emptySub}>{t("home.emptySub")}</Text>
-        <Text style={styles.emptyMockHint}>{t("home.emptyMockHint")}</Text>
       </View>
     );
   };
@@ -1209,76 +1150,6 @@ const styles = StyleSheet.create({
     color: Theme.muted,
     letterSpacing: 0.12,
   },
-  mockSection: {
-    marginTop: 14,
-    marginBottom: 4,
-  },
-  mockSectionHint: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: Theme.sub,
-    letterSpacing: 0.4,
-    textTransform: "uppercase",
-    marginBottom: 10,
-  },
-  mockScroll: {
-    paddingRight: 12,
-    paddingBottom: 8,
-  },
-  mockCardOuter: {
-    width: 108,
-    aspectRatio: 63 / 88,
-    marginRight: 12,
-    borderRadius: 14,
-    overflow: "hidden",
-    backgroundColor: Theme.card,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  mockCardPressed: {
-    opacity: 0.9,
-  },
-  mockCardGrad: {
-    flex: 1,
-    padding: 10,
-    justifyContent: "space-between",
-  },
-  mockCardRating: {
-    fontSize: 20,
-    fontWeight: "900",
-    color: "rgba(255,255,255,0.98)",
-    fontVariant: ["tabular-nums"],
-    textShadowColor: "rgba(0,0,0,0.35)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  mockCardMid: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    minHeight: 36,
-  },
-  mockCardEmoji: {
-    fontSize: 28,
-  },
-  mockCardName: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: "#ffffff",
-    lineHeight: 15,
-    textShadowColor: "rgba(0,0,0,0.25)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  mockCardClub: {
-    marginTop: 3,
-    fontSize: 10,
-    fontWeight: "600",
-    color: "rgba(255,255,255,0.88)",
-  },
   chip: {
     paddingHorizontal: 11,
     paddingVertical: 5,
@@ -1406,15 +1277,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 22,
     maxWidth: 280,
-  },
-  emptyMockHint: {
-    marginTop: 20,
-    fontSize: 12,
-    color: Theme.muted,
-    textAlign: "center",
-    lineHeight: 18,
-    maxWidth: 300,
-    fontWeight: "500",
   },
   errorText: {
     color: Theme.error,

@@ -305,6 +305,7 @@
     "viewAll": "Alle ansehen",
     "allOffers": "ALLE ANGEBOTE",
     "highlightTrending": "🔥 Trending Karten",
+    "highlightDiscover": "✨ Neu & entdecken",
     "highlightNew": "⚡ Neu eingestellt",
     "dealBelow": "{{pct}}% unter Marktwert",
     "dealAbove": "{{pct}}% über Marktwert",
@@ -317,9 +318,7 @@
     "badgeHot": "📈 gefragt",
     "signInToSave": "Zum Merken bitte anmelden.",
     "signInToMessage": "Zum Schreiben bitte anmelden.",
-    "offersCountLabel": "{{count}} Angebote",
-    "mockCardsHint": "Beispiel · Fußballkarten",
-    "emptyMockHint": "Die Karten darüber sind nur Demo — echte Angebote erscheinen, sobald Treffer da sind."
+    "offersCountLabel": "{{count}} Angebote"
   },
   "profile": {
     "pleaseSignIn": "Bitte anmelden.",
