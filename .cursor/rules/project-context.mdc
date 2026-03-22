@@ -1,0 +1,12 @@
+---
+description: Zuordnung App ↔ Backend CardCore
+alwaysApply: true
+---
+
+# CardCore-App (Mobile)
+
+**Dieses Repo:** `C:\Users\CENSOR\Desktop\CardCore-Mobile\CardCore-App` — Expo / React Native App.
+
+**Backend (API, Admin, SQL):** `C:\Users\CENSOR\Desktop\CardCore` — getrenntes Repo; Änderungen an Endpoints, Push, DB-Migrationen nur dort.
+
+Bei neuen API-Feldern (z. B. `avg_response_hours`, Review-Snippets, Chat-Push) die App-UI und API-Clients hier anpassen.
