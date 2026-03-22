@@ -26,3 +26,71 @@ export async function api(path, { token, method = "GET", body } = {}) {
   }
   return data;
 }
+
+/**
+ * KI-Erkennung: Vorder- und Rückseite als Base64 (ohne data:-Prefix möglich).
+ */
+export async function getListingAnalytics(token, listingId, range = "30d") {
+  return api(`/api/listings/${listingId}/analytics?range=${encodeURIComponent(range)}`, {
+    token,
+  });
+}
+
+export async function postOffer(token, body) {
+  return api("/api/offers", { token, method: "POST", body });
+}
+
+export async function getOffers(token, role = "all", opts = {}) {
+  const q = new URLSearchParams({ role: String(role) });
+  if (opts.limit != null) q.set("limit", String(opts.limit));
+  if (opts.offset != null) q.set("offset", String(opts.offset));
+  return api(`/api/offers?${q.toString()}`, { token });
+}
+
+export async function acceptOffer(token, offerId) {
+  return api(`/api/offers/${offerId}/accept`, { token, method: "POST" });
+}
+
+export async function rejectOffer(token, offerId) {
+  return api(`/api/offers/${offerId}/reject`, { token, method: "POST" });
+}
+
+export async function withdrawOffer(token, offerId) {
+  return api(`/api/offers/${offerId}/withdraw`, { token, method: "POST" });
+}
+
+export async function getDeals(token, opts = {}) {
+  const q = new URLSearchParams();
+  if (opts.limit != null) q.set("limit", String(opts.limit));
+  if (opts.offset != null) q.set("offset", String(opts.offset));
+  if (opts.status) q.set("status", String(opts.status));
+  const qs = q.toString();
+  return api(`/api/deals${qs ? `?${qs}` : ""}`, { token });
+}
+
+export async function getDeal(token, dealId) {
+  return api(`/api/deals/${dealId}`, { token });
+}
+
+export async function patchDeal(token, dealId, body) {
+  return api(`/api/deals/${dealId}`, { token, method: "PATCH", body });
+}
+
+export async function analyzeCardImages({
+  token,
+  frontBase64,
+  backBase64,
+  frontMime,
+  backMime,
+}) {
+  return api("/api/ai/analyze-card", {
+    token,
+    method: "POST",
+    body: {
+      front_base64: frontBase64,
+      back_base64: backBase64,
+      front_mime: frontMime || "image/jpeg",
+      back_mime: backMime || "image/jpeg",
+    },
+  });
+}

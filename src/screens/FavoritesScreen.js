@@ -2,15 +2,19 @@ import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   Pressable,
   RefreshControl,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import { PRIMARY } from "../config";
+import { StatusBar } from "expo-status-bar";
+import { useTranslation } from "react-i18next";
+import { Theme } from "../theme";
 import { api } from "../api";
 import { useAuth } from "../AuthContext";
+import { getListingThumbnailUri } from "../utils/listingImages";
 
 const POLL_MS = 25000;
 
@@ -21,6 +25,7 @@ function formatPrice(cents, currency) {
 }
 
 export default function FavoritesScreen({ navigation }) {
+  const { t } = useTranslation();
   const { token } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -61,22 +66,31 @@ export default function FavoritesScreen({ navigation }) {
   }
 
   function renderItem({ item }) {
+    const thumb = getListingThumbnailUri(item);
     return (
       <Pressable
-        style={styles.row}
+        style={({ pressed }) => [
+          styles.row,
+          pressed ? styles.rowPressed : null,
+        ]}
         onPress={() =>
           navigation.navigate("ListingDetail", { id: item.id })
         }
+        android_ripple={{ color: "rgba(26,26,26,0.08)" }}
       >
-        <Text style={styles.rowTitle}>
-          {item.player_name} · {item.year}
-        </Text>
-        <Text style={styles.rowMeta}>
-          {item.sport} · {item.manufacturer}
-        </Text>
-        <Text style={styles.rowPrice}>
-          {formatPrice(item.price_cents, item.currency)}
-        </Text>
+        <Image source={{ uri: thumb }} style={styles.thumb} />
+        <View style={styles.rowBody}>
+          <Text style={styles.rowTitle} numberOfLines={2}>
+            {item.player_name}
+            <Text style={styles.rowYear}> · {item.year}</Text>
+          </Text>
+          <Text style={styles.rowMeta} numberOfLines={1}>
+            {item.sport} · {item.manufacturer}
+          </Text>
+          <Text style={styles.rowPrice}>
+            {formatPrice(item.price_cents, item.currency)}
+          </Text>
+        </View>
       </Pressable>
     );
   }
@@ -84,7 +98,8 @@ export default function FavoritesScreen({ navigation }) {
   if (!token) {
     return (
       <View style={styles.center}>
-        <Text style={styles.muted}>Bitte anmelden.</Text>
+        <StatusBar style="dark" />
+        <Text style={styles.muted}>{t("profile.pleaseSignIn")}</Text>
       </View>
     );
   }
@@ -92,14 +107,15 @@ export default function FavoritesScreen({ navigation }) {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color={PRIMARY} />
+        <StatusBar style="dark" />
+        <ActivityIndicator color={Theme.text} />
       </View>
     );
   }
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.head}>Dein Merkzettel</Text>
+      <StatusBar style="dark" />
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {!error ? (
         <FlatList
@@ -107,10 +123,15 @@ export default function FavoritesScreen({ navigation }) {
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={Theme.text}
+              colors={[Theme.text]}
+            />
           }
           ListEmptyComponent={
-            <Text style={styles.empty}>Noch keine Favoriten.</Text>
+            <Text style={styles.empty}>{t("favorites.empty")}</Text>
           }
           contentContainerStyle={styles.listContent}
         />
@@ -120,29 +141,33 @@ export default function FavoritesScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, backgroundColor: "#fafafa" },
-  head: {
-    fontSize: 16,
-    fontWeight: "700",
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 8,
-    color: "#111",
-  },
+  wrap: { flex: 1, backgroundColor: Theme.bg },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  muted: { color: "#888" },
-  error: { padding: 16, color: "#a00" },
+  muted: { color: Theme.muted },
+  error: { padding: 16, color: Theme.error },
   listContent: { padding: 16, paddingBottom: 32 },
   row: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#eee",
-    borderRadius: 10,
-    padding: 14,
+    flexDirection: "row",
+    alignItems: "stretch",
+    backgroundColor: Theme.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Theme.line,
+    borderRadius: 12,
+    padding: 12,
     marginBottom: 10,
+    overflow: "hidden",
   },
-  rowTitle: { fontSize: 16, fontWeight: "600", color: "#111" },
-  rowMeta: { fontSize: 14, color: "#555", marginTop: 4 },
-  rowPrice: { fontSize: 15, color: PRIMARY, marginTop: 8, fontWeight: "600" },
-  empty: { textAlign: "center", color: "#888", marginTop: 32 },
+  rowPressed: { opacity: 0.94 },
+  thumb: {
+    width: 72,
+    height: 96,
+    borderRadius: 12,
+    backgroundColor: Theme.card,
+  },
+  rowBody: { flex: 1, minWidth: 0, marginLeft: 12, justifyContent: "center" },
+  rowTitle: { fontSize: 16, fontWeight: "800", color: Theme.text },
+  rowYear: { fontWeight: "600", color: Theme.muted },
+  rowMeta: { fontSize: 14, color: Theme.muted, marginTop: 6 },
+  rowPrice: { fontSize: 16, color: Theme.text, marginTop: 10, fontWeight: "800" },
+  empty: { textAlign: "center", color: Theme.muted, marginTop: 32 },
 });

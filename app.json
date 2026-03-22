@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "CardCore-App",
-    "slug": "CardCore-App",
+    "name": "VUREX",
+    "slug": "vurex",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -26,7 +26,27 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-notifications",
+        {
+          "sounds": []
+        }
+      ],
+      [
+        "expo-tracking-transparency",
+        {
+          "userTrackingPermission": "Wir nutzen diese Angabe für Entwicklung und Qualität von VUREX."
+        }
+      ],
+      "expo-localization",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "VUREX nutzt Fotos für deine Karten-Listings.",
+          "cameraPermission": "Mit der Kamera fotografierst du Vorder- und Rückseite für die automatische Erkennung."
+        }
+      ]
     ]
   }
 }
