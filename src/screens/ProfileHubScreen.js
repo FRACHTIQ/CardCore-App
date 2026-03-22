@@ -21,6 +21,7 @@ import { useAuth } from "../AuthContext";
 import { profileInitial } from "../utils/profileInitial";
 import { pickProfileAvatarDataUrl } from "../utils/pickProfileAvatar";
 import { resolveUserAvatarUri } from "../utils/resolveUserAvatarUri";
+import { TeamAdminBadge } from "../components/TeamAdminBadge";
 
 const APP_VERSION =
   Constants.expoConfig?.version ??
@@ -255,6 +256,7 @@ export default function ProfileHubScreen({ navigation }) {
                 </Text>
               </View>
             ) : null}
+            {isAdmin ? <TeamAdminBadge compact /> : null}
           </View>
           {meUser ? (
             <Text style={styles.headerEmail} numberOfLines={1}>

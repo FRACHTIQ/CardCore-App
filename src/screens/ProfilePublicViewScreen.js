@@ -18,6 +18,7 @@ import { Theme } from "../theme";
 import { api } from "../api";
 import { useAuth } from "../AuthContext";
 import { ReportUserSheet } from "../components/ReportUserSheet";
+import { TeamAdminBadge } from "../components/TeamAdminBadge";
 import { profileInitial } from "../utils/profileInitial";
 import { resolveUserAvatarUri } from "../utils/resolveUserAvatarUri";
 import { formatProfilePresence } from "../utils/formatPresence";
@@ -178,9 +179,12 @@ export default function ProfilePublicViewScreen({ route, navigation }) {
         </View>
         <View style={styles.headerTextCol}>
           <Text style={styles.headerEyebrow}>{t("profile.publicUserTitle")}</Text>
-          <Text style={styles.headerName} numberOfLines={2}>
-            {profile.display_name}
-          </Text>
+          <View style={styles.headerNameRow}>
+            <Text style={styles.headerName} numberOfLines={2}>
+              {profile.display_name}
+            </Text>
+            {profile.is_admin ? <TeamAdminBadge compact /> : null}
+          </View>
           <View style={styles.presenceRow}>
             <View
               style={[
@@ -359,8 +363,15 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     textTransform: "uppercase",
   },
-  headerName: {
+  headerNameRow: {
     marginTop: 4,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 8,
+  },
+  headerName: {
+    flexShrink: 1,
     fontSize: 22,
     fontWeight: "800",
     color: Theme.text,

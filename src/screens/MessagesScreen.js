@@ -29,6 +29,7 @@ import { profileInitial } from "../utils/profileInitial";
 import { getMessageReads, setMessageRead } from "../utils/messageReadState";
 import { pickChatImageDataUrl } from "../utils/pickChatImage";
 import { ReportUserSheet } from "../components/ReportUserSheet";
+import { TeamAdminBadge } from "../components/TeamAdminBadge";
 
 const POLL_CONV_MS = 20000;
 const POLL_MSG_MS = 4000;
@@ -629,12 +630,17 @@ export default function MessagesScreen({ navigation, route }) {
         </View>
         <View style={styles.convMid}>
           <View style={styles.convTopRow}>
-            <Text
-              style={[styles.convTitle, unread ? styles.convTitleUnread : null]}
-              numberOfLines={1}
-            >
-              {label}
-            </Text>
+            <View style={styles.convTitleCluster}>
+              <Text
+                style={[styles.convTitle, unread ? styles.convTitleUnread : null]}
+                numberOfLines={1}
+              >
+                {label}
+              </Text>
+              {item.other_user_is_admin ? (
+                <TeamAdminBadge compact />
+              ) : null}
+            </View>
             {when ? <Text style={styles.convTime}>{when}</Text> : null}
           </View>
           {listingLine ? (
@@ -698,6 +704,11 @@ export default function MessagesScreen({ navigation, route }) {
             <Text style={styles.threadBannerText} numberOfLines={1}>
               {listingHint}
             </Text>
+          </View>
+        ) : null}
+        {activeConv?.other_user_is_admin ? (
+          <View style={styles.threadTeamBanner}>
+            <TeamAdminBadge compact />
           </View>
         ) : null}
         {error ? <Text style={styles.errorBanner}>{error}</Text> : null}
@@ -1085,7 +1096,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 8,
   },
-  convTitle: { fontSize: 16, fontWeight: "700", color: Theme.text, flex: 1 },
+  convTitleCluster: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 6,
+  },
+  convTitle: { fontSize: 16, fontWeight: "700", color: Theme.text, flexShrink: 1 },
   convTime: {
     fontSize: 12,
     color: Theme.muted,
@@ -1168,6 +1187,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     color: Theme.sub,
+  },
+  threadTeamBanner: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: Theme.soft,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Theme.line,
   },
   msgScroll: { flex: 1 },
   msgContent: { padding: 16, paddingBottom: 24 },

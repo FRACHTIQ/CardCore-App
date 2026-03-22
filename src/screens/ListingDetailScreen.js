@@ -25,6 +25,7 @@ import {
 } from "../api";
 import { useAuth } from "../AuthContext";
 import { formatProfilePresence } from "../utils/formatPresence";
+import { TeamAdminBadge } from "../components/TeamAdminBadge";
 
 const { width: WIN_W } = Dimensions.get("window");
 const IMG_H = Math.min(380, WIN_W * 0.95);
@@ -586,9 +587,12 @@ export default function ListingDetailScreen({ navigation, route }) {
           })
         }
       >
-        <Text style={styles.seller}>
-          {t("listing.seller")}: {listing.seller_display_name || "—"}
-        </Text>
+        <View style={styles.sellerTitleRow}>
+          <Text style={styles.seller}>
+            {t("listing.seller")}: {listing.seller_display_name || "—"}
+          </Text>
+          {listing.seller_is_admin ? <TeamAdminBadge compact /> : null}
+        </View>
         {listing.seller_is_online === true || listing.seller_last_seen_at ? (
           <View style={styles.sellerPresenceRow}>
             <View
@@ -855,6 +859,12 @@ const styles = StyleSheet.create({
   },
   offerAcceptText: { fontWeight: "700", color: Theme.text },
   offerReject: { color: Theme.error, fontWeight: "600" },
+  sellerTitleRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 8,
+  },
   sellerPress: {
     marginTop: 18,
     marginBottom: 12,

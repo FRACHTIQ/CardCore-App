@@ -361,6 +361,8 @@
     "menuPreviewSub": "So siehst du für andere aus",
     "publicPreviewTitle": "Öffentliche Vorschau",
     "publicUserTitle": "Nutzerprofil",
+    "teamAdminBadge": "Team",
+    "teamAdminBadgeA11y": "Plattform-Team / Administrator",
     "safetyTitle": "Sicherheit",
     "blockUser": "Blockieren",
     "unblockUser": "Blockierung aufheben",
