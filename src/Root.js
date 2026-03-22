@@ -13,6 +13,7 @@ import { API_BASE_URL } from "./config";
 import { compareSemver } from "./utils/compareSemver";
 import MaintenanceGateScreen from "./screens/MaintenanceGateScreen";
 import { registerExpoPushTokenWithBackend } from "./push/registerExpoPushToken";
+import { usePresenceHeartbeat } from "./hooks/usePresenceHeartbeat";
 
 function applyStatusPayload(data, setGate) {
   if (data?.maintenance?.enabled) {
@@ -114,6 +115,11 @@ export function Root() {
     }
     registerExpoPushTokenWithBackend(token);
   }, [ready, token, bootReady]);
+
+  usePresenceHeartbeat(
+    token,
+    Boolean(ready && bootReady && !gate.loading && !gate.maintenanceMode)
+  );
 
   const showMainUi = ready && bootReady && !gate.loading;
 

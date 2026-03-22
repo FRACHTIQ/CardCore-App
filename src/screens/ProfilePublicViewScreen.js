@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,9 +17,11 @@ import { Theme } from "../theme";
 import { api } from "../api";
 import { profileInitial } from "../utils/profileInitial";
 import { resolveUserAvatarUri } from "../utils/resolveUserAvatarUri";
+import { formatProfilePresence } from "../utils/formatPresence";
+import { SOCIAL_PLATFORM_ORDER } from "../utils/socialPlatforms";
 
 export default function ProfilePublicViewScreen({ route, navigation }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const rawUserId = route.params?.userId;
   const userId =
@@ -104,8 +107,56 @@ export default function ProfilePublicViewScreen({ route, navigation }) {
           <Text style={styles.headerName} numberOfLines={2}>
             {profile.display_name}
           </Text>
+          <View style={styles.presenceRow}>
+            <View
+              style={[
+                styles.presenceDot,
+                profile.is_online ? styles.presenceDotOn : styles.presenceDotOff,
+              ]}
+            />
+            <Text
+              style={
+                profile.is_online ? styles.presenceTextOn : styles.presenceTextOff
+              }
+              numberOfLines={2}
+            >
+              {formatProfilePresence(
+                t,
+                profile.last_seen_at,
+                profile.is_online,
+                i18n.language
+              )}
+            </Text>
+          </View>
         </View>
       </View>
+
+      {Array.isArray(profile.social_links) && profile.social_links.length > 0 ? (
+        <View style={styles.socialCard}>
+          <Text style={styles.socialTitle}>{t("profile.socialProfileLinks")}</Text>
+          <View style={styles.socialRow}>
+            {profile.social_links.map((item) => {
+              const meta = SOCIAL_PLATFORM_ORDER.find((p) => p.id === item.platform);
+              const icon = meta?.icon || "link-outline";
+              const labelKey = `profile.social_${item.platform}`;
+              return (
+                <Pressable
+                  key={`${item.platform}-${item.url}`}
+                  style={({ pressed }) => [
+                    styles.socialBtn,
+                    pressed ? styles.socialBtnPressed : null,
+                  ]}
+                  onPress={() => Linking.openURL(item.url)}
+                  accessibilityRole="link"
+                  accessibilityLabel={t(labelKey)}
+                >
+                  <Ionicons name={icon} size={24} color={Theme.text} />
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
 
       <View style={styles.statsRow}>
         <View style={styles.statCell}>
@@ -193,6 +244,63 @@ const styles = StyleSheet.create({
     color: Theme.text,
     letterSpacing: -0.4,
   },
+  presenceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+    gap: 8,
+  },
+  presenceDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  presenceDotOn: { backgroundColor: "#22c55e" },
+  presenceDotOff: { backgroundColor: Theme.muted },
+  presenceTextOn: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#15803d",
+  },
+  presenceTextOff: {
+    flex: 1,
+    fontSize: 13,
+    color: Theme.muted,
+  },
+  socialCard: {
+    marginBottom: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: Theme.surface,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Theme.line,
+  },
+  socialTitle: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: Theme.sub,
+    marginBottom: 10,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
+  socialRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  socialBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: Theme.soft,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Theme.line,
+  },
+  socialBtnPressed: { opacity: 0.85 },
   statsRow: {
     flexDirection: "row",
     alignItems: "stretch",

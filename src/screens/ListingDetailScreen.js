@@ -24,6 +24,7 @@ import {
   rejectOffer,
 } from "../api";
 import { useAuth } from "../AuthContext";
+import { formatProfilePresence } from "../utils/formatPresence";
 
 const { width: WIN_W } = Dimensions.get("window");
 const IMG_H = Math.min(380, WIN_W * 0.95);
@@ -57,7 +58,7 @@ function MiniPriceChart({ points, t }) {
 }
 
 export default function ListingDetailScreen({ navigation, route }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { token } = useAuth();
   const id = route.params && route.params.id ? route.params.id : null;
   const [listing, setListing] = useState(null);
@@ -577,6 +578,7 @@ export default function ListingDetailScreen({ navigation, route }) {
       ) : null}
 
       <Pressable
+        style={styles.sellerPress}
         onPress={() =>
           navigation.navigate("Profile", {
             screen: "ProfilePublicUser",
@@ -587,6 +589,33 @@ export default function ListingDetailScreen({ navigation, route }) {
         <Text style={styles.seller}>
           {t("listing.seller")}: {listing.seller_display_name || "—"}
         </Text>
+        {listing.seller_is_online === true || listing.seller_last_seen_at ? (
+          <View style={styles.sellerPresenceRow}>
+            <View
+              style={[
+                styles.sellerDot,
+                listing.seller_is_online
+                  ? styles.sellerDotOn
+                  : styles.sellerDotOff,
+              ]}
+            />
+            <Text
+              style={
+                listing.seller_is_online
+                  ? styles.sellerPresenceOn
+                  : styles.sellerPresenceOff
+              }
+              numberOfLines={2}
+            >
+              {formatProfilePresence(
+                t,
+                listing.seller_last_seen_at,
+                listing.seller_is_online === true,
+                i18n.language
+              )}
+            </Text>
+          </View>
+        ) : null}
       </Pressable>
 
       <Text style={styles.label}>{t("listing.sport")}</Text>
@@ -826,13 +855,39 @@ const styles = StyleSheet.create({
   },
   offerAcceptText: { fontWeight: "700", color: Theme.text },
   offerReject: { color: Theme.error, fontWeight: "600" },
-  seller: {
+  sellerPress: {
     marginTop: 18,
     marginBottom: 12,
+    paddingHorizontal: 20,
+  },
+  seller: {
     color: Theme.sub,
     fontSize: 15,
     fontWeight: "600",
-    paddingHorizontal: 20,
+  },
+  sellerPresenceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+    gap: 8,
+  },
+  sellerDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  sellerDotOn: { backgroundColor: "#22c55e" },
+  sellerDotOff: { backgroundColor: Theme.muted },
+  sellerPresenceOn: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#15803d",
+  },
+  sellerPresenceOff: {
+    flex: 1,
+    fontSize: 13,
+    color: Theme.muted,
   },
   label: {
     marginTop: 14,

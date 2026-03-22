@@ -4,6 +4,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
@@ -16,6 +17,26 @@ import { Theme } from "../theme";
 import { api } from "../api";
 import { LanguageToggle } from "../components/LanguageToggle";
 import { useAuth } from "../AuthContext";
+import { SOCIAL_PLATFORM_ORDER } from "../utils/socialPlatforms";
+
+function emptySocialMap() {
+  const o = {};
+  SOCIAL_PLATFORM_ORDER.forEach(({ id }) => {
+    o[id] = "";
+  });
+  return o;
+}
+
+function hydrateSocial(user) {
+  const next = emptySocialMap();
+  const arr = Array.isArray(user?.social_links) ? user.social_links : [];
+  arr.forEach((item) => {
+    if (item.platform && next[item.platform] !== undefined) {
+      next[item.platform] = item.url || "";
+    }
+  });
+  return next;
+}
 
 export default function ProfileEditScreen() {
   const { t } = useTranslation();
@@ -26,6 +47,8 @@ export default function ProfileEditScreen() {
   const [error, setError] = useState("");
   const [editName, setEditName] = useState("");
   const [editBio, setEditBio] = useState("");
+  const [showLastSeen, setShowLastSeen] = useState(true);
+  const [socialUrls, setSocialUrls] = useState(emptySocialMap);
 
   const load = useCallback(async () => {
     if (!token) {
@@ -35,8 +58,11 @@ export default function ProfileEditScreen() {
     setError("");
     try {
       const mine = await api("/api/users/me", { token });
-      setEditName(mine.user.display_name || "");
-      setEditBio(mine.user.bio || "");
+      const u = mine.user;
+      setEditName(u.display_name || "");
+      setEditBio(u.bio || "");
+      setShowLastSeen(u.show_last_seen !== false);
+      setSocialUrls(hydrateSocial(u));
     } catch (e) {
       setError(e.message || t("common.error"));
     } finally {
@@ -48,6 +74,10 @@ export default function ProfileEditScreen() {
     load();
   }, [load]);
 
+  function setSocialField(platform, value) {
+    setSocialUrls((prev) => ({ ...prev, [platform]: value }));
+  }
+
   async function onSave() {
     if (!token) {
       return;
@@ -55,10 +85,19 @@ export default function ProfileEditScreen() {
     setSaving(true);
     setError("");
     try {
+      const social_links = SOCIAL_PLATFORM_ORDER.map(({ id }) => ({
+        platform: id,
+        url: String(socialUrls[id] || "").trim(),
+      })).filter((row) => row.url.length > 0);
       await api("/api/users/me", {
         token,
         method: "PATCH",
-        body: { display_name: editName, bio: editBio },
+        body: {
+          display_name: editName,
+          bio: editBio,
+          social_links,
+          show_last_seen: showLastSeen,
+        },
       });
     } catch (e) {
       setError(e.message || t("common.error"));
@@ -119,6 +158,41 @@ export default function ProfileEditScreen() {
             placeholderTextColor={Theme.muted}
           />
         </View>
+      </View>
+
+      <View style={styles.card}>
+        <View style={styles.switchRow}>
+          <Text style={styles.switchLabel}>{t("profile.showLastSeen")}</Text>
+          <Switch
+            value={showLastSeen}
+            onValueChange={setShowLastSeen}
+            trackColor={{ false: Theme.line, true: Theme.heroBg }}
+            thumbColor={Theme.surface}
+          />
+        </View>
+        <Text style={styles.hint}>{t("profile.socialHint")}</Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>{t("profile.socialSectionEdit")}</Text>
+        {SOCIAL_PLATFORM_ORDER.map(({ id, icon }) => (
+          <View key={id} style={styles.fieldBlock}>
+            <View style={styles.socialLabelRow}>
+              <Ionicons name={icon} size={18} color={Theme.sub} />
+              <Text style={styles.fieldLabel}>{t(`profile.social_${id}`)}</Text>
+            </View>
+            <TextInput
+              style={styles.input}
+              value={socialUrls[id]}
+              onChangeText={(v) => setSocialField(id, v)}
+              placeholder="https://…"
+              placeholderTextColor={Theme.muted}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+            />
+          </View>
+        ))}
       </View>
 
       {saving ? (
@@ -184,6 +258,36 @@ const styles = StyleSheet.create({
     color: Theme.sub,
     marginBottom: 6,
   },
+  socialLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 6,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: Theme.text,
+    marginBottom: 4,
+  },
+  switchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  switchLabel: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: "600",
+    color: Theme.text,
+  },
+  hint: {
+    marginTop: 12,
+    fontSize: 13,
+    lineHeight: 19,
+    color: Theme.muted,
+  },
   input: {
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: Theme.border,
@@ -192,7 +296,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     color: Theme.text,
-    backgroundColor: Theme.surface,
+    backgroundColor: Theme.bg,
   },
   multiline: { minHeight: 96, textAlignVertical: "top" },
   spinner: { marginVertical: 16 },
