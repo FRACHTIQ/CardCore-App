@@ -390,7 +390,16 @@ export default function ListingDetailScreen({ navigation, route }) {
         </View>
       )}
 
-      <Text style={styles.player}>{listing.player_name}</Text>
+      <View style={styles.playerRow}>
+        <Text style={styles.player}>{listing.player_name}</Text>
+        {listing.is_private_market ? (
+          <View style={styles.detailPrivateBadge}>
+            <Text style={styles.detailPrivateBadgeText}>
+              {t("listing.privateBadge")}
+            </Text>
+          </View>
+        ) : null}
+      </View>
       <Text style={styles.price}>
         {formatPrice(listing.price_cents, listing.currency)}
       </Text>
@@ -668,12 +677,31 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
+  playerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    paddingHorizontal: 20,
+  },
   player: {
     fontSize: 24,
     fontWeight: "800",
     color: Theme.text,
     letterSpacing: -0.3,
-    paddingHorizontal: 20,
+    flexShrink: 1,
+  },
+  detailPrivateBadge: {
+    marginLeft: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: Theme.heroBg,
+  },
+  detailPrivateBadgeText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#f4d03f",
+    letterSpacing: 0.2,
   },
   price: {
     fontSize: 22,

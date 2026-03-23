@@ -137,6 +137,8 @@ export default function HomeScreen({ navigation }) {
   const [appliedCondition, setAppliedCondition] = useState("");
   const [appliedCardType, setAppliedCardType] = useState("");
   const [appliedSort, setAppliedSort] = useState("updated_at_desc");
+  /** @type {'public' | 'private'} */
+  const [feedScope, setFeedScope] = useState("public");
   const [meUser, setMeUser] = useState(null);
   const [timeTick, setTimeTick] = useState(0);
   /** Ungefilterte „Entdecken“-Karten (immer neueste), unabhängig von Suche/Filtern. */
@@ -154,6 +156,12 @@ export default function HomeScreen({ navigation }) {
   useEffect(() => {
     loadFeatured();
   }, [loadFeatured]);
+
+  useEffect(() => {
+    if (!token) {
+      setFeedScope("public");
+    }
+  }, [token]);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -252,9 +260,17 @@ export default function HomeScreen({ navigation }) {
       if (appliedSort.trim()) {
         q.set("sort", appliedSort.trim());
       }
+      if (feedScope === "private") {
+        q.set("private_market", "1");
+      }
       const qs = q.toString();
       const path = `/api/listings?${qs}`;
-      const opts = token ? { token } : {};
+      const opts =
+        feedScope === "private"
+          ? { token }
+          : token
+            ? { token }
+            : {};
       const data = await api(path, opts);
       const list = data.listings || [];
       const tot = data.total || 0;
@@ -281,6 +297,7 @@ export default function HomeScreen({ navigation }) {
     appliedCondition,
     appliedCardType,
     appliedSort,
+    feedScope,
     token,
     t,
   ]);
@@ -436,10 +453,22 @@ export default function HomeScreen({ navigation }) {
           >
             <Image source={{ uri: thumb }} style={styles.rowThumbImg} />
             <View style={styles.rowBody}>
-              <Text style={styles.rowTitle} numberOfLines={2}>
-                {item.player_name}
-                <Text style={styles.rowYear}> · {item.year}</Text>
-              </Text>
+              <View style={styles.rowTitleRow}>
+                <Text
+                  style={[styles.rowTitle, styles.rowTitleFlex]}
+                  numberOfLines={2}
+                >
+                  {item.player_name}
+                  <Text style={styles.rowYear}> · {item.year}</Text>
+                </Text>
+                {item.is_private_market ? (
+                  <View style={styles.privateBadge}>
+                    <Text style={styles.privateBadgeText}>
+                      {t("listing.privateBadge")}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
               <Text style={styles.rowMeta} numberOfLines={1}>
                 {item.sport} · {item.manufacturer}
               </Text>
@@ -532,6 +561,8 @@ export default function HomeScreen({ navigation }) {
     </ScrollView>
   );
 
+  const privateAccess = Boolean(meUser?.private_market_access);
+
   const greetingName = greetingFirstName(meUser);
   const greetingLine = useMemo(() => {
     const part = getDayPart();
@@ -546,13 +577,14 @@ export default function HomeScreen({ navigation }) {
   const dashAvatarUri = meUser ? resolveUserAvatarUri(meUser.avatar_url) : null;
   const dashAvatarLetter = profileInitial(meUser?.display_name, meUser?.email);
 
-  const highlightItems = useMemo(
-    () =>
-      featuredStrip.length > 0
-        ? featuredStrip.slice(0, 4)
-        : listings.slice(0, 4),
-    [featuredStrip, listings]
-  );
+  const highlightItems = useMemo(() => {
+    if (feedScope === "private") {
+      return [];
+    }
+    return featuredStrip.length > 0
+      ? featuredStrip.slice(0, 4)
+      : listings.slice(0, 4);
+  }, [feedScope, featuredStrip, listings]);
   const highlightTitleKey =
     featuredStrip.length > 0
       ? "home.highlightDiscover"
@@ -624,6 +656,57 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.dashDivider} />
 
       <View style={styles.searchSectionWrap}>
+        <View style={styles.feedSegment}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.feedSegBtn,
+              feedScope === "public" ? styles.feedSegBtnOn : null,
+              pressed ? styles.feedSegBtnPressed : null,
+            ]}
+            onPress={() => setFeedScope("public")}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: feedScope === "public" }}
+          >
+            <Text
+              style={
+                feedScope === "public"
+                  ? styles.feedSegTextOn
+                  : styles.feedSegText
+              }
+            >
+              {t("home.feedPublic")}
+            </Text>
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [
+              styles.feedSegBtn,
+              feedScope === "private" ? styles.feedSegBtnOn : null,
+              (!token || !privateAccess) ? styles.feedSegBtnDisabled : null,
+              pressed && token && privateAccess ? styles.feedSegBtnPressed : null,
+            ]}
+            disabled={!token || !privateAccess}
+            onPress={() => setFeedScope("private")}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: feedScope === "private" }}
+          >
+            <Text
+              style={
+                feedScope === "private"
+                  ? styles.feedSegTextOn
+                  : styles.feedSegText
+              }
+            >
+              {t("home.feedPrivate")}
+            </Text>
+          </Pressable>
+        </View>
+        {!token ? (
+          <Text style={styles.privateTradeHint}>{t("home.privateTradeSignIn")}</Text>
+        ) : null}
+        {token && !privateAccess ? (
+          <Text style={styles.privateTradeHint}>{t("home.privateTradeHint")}</Text>
+        ) : null}
+
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <View style={styles.searchBarPill}>
@@ -1105,6 +1188,68 @@ const styles = StyleSheet.create({
   searchSectionWrap: {
     paddingTop: 8,
     paddingBottom: 4,
+  },
+  feedSegment: {
+    flexDirection: "row",
+    backgroundColor: Theme.soft,
+    borderRadius: 12,
+    padding: 3,
+    marginBottom: 12,
+  },
+  feedSegBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  feedSegBtnOn: {
+    backgroundColor: Theme.surface,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  feedSegBtnDisabled: { opacity: 0.45 },
+  feedSegBtnPressed: { opacity: 0.88 },
+  feedSegText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: Theme.sub,
+  },
+  feedSegTextOn: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: Theme.text,
+  },
+  privateTradeHint: {
+    fontSize: 12,
+    color: Theme.muted,
+    marginBottom: 10,
+    lineHeight: 17,
+  },
+  rowTitleRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    width: "100%",
+  },
+  rowTitleFlex: {
+    flex: 1,
+    minWidth: 0,
+  },
+  privateBadge: {
+    marginLeft: 8,
+    marginTop: 2,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+    backgroundColor: Theme.heroBg,
+  },
+  privateBadgeText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#f4d03f",
+    letterSpacing: 0.2,
   },
   /** Nur die Suchzeile als Pille — Chips und Meta liegen außerhalb, wirkt luftiger. */
   searchBarPill: {

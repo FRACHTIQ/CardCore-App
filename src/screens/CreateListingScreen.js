@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   ActivityIndicator,
   Alert,
@@ -19,9 +20,42 @@ import { Theme } from "../theme";
 import { api, analyzeCardImages } from "../api";
 import { useAuth } from "../AuthContext";
 
-export default function CreateListingScreen({ navigation }) {
+export default function CreateListingScreen({ navigation, route }) {
   const { t } = useTranslation();
   const { token } = useAuth();
+  const [meProfile, setMeProfile] = useState(null);
+  const [isPrivateMarket, setIsPrivateMarket] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      (async () => {
+        if (!token) {
+          setMeProfile(null);
+          setIsPrivateMarket(false);
+          return;
+        }
+        try {
+          const data = await api("/api/users/me", { token });
+          if (!cancelled && data?.user) {
+            setMeProfile(data.user);
+            if (!data.user.private_market_access) {
+              setIsPrivateMarket(false);
+            }
+          }
+        } catch {
+          if (!cancelled) {
+            setMeProfile(null);
+          }
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [token])
+  );
+
+  const privateMarketAccess = Boolean(meProfile?.private_market_access);
   const [sport, setSport] = useState("");
   const [manufacturer, setManufacturer] = useState("");
   const [setName, setSetName] = useState("");
@@ -163,34 +197,42 @@ export default function CreateListingScreen({ navigation }) {
 
     setLoading(true);
     try {
+      const body = {
+        sport,
+        manufacturer,
+        set_name: setName,
+        year: y,
+        player_name: playerName,
+        team,
+        card_number: cardNumber,
+        card_type: cardType,
+        condition_grade: conditionGrade,
+        price_cents: priceCents,
+        currency: "EUR",
+        description,
+        image_urls: imageUrls,
+        status: "ACTIVE",
+        is_graded: isGraded,
+        grading_company: gradingCompany,
+        grading_grade: gradingGrade,
+        shipping_included: shippingIncluded,
+        shipping_cost_cents: shippingCostCents,
+        market_value_cents: marketValueCents,
+        market_value_source: String(marketValueSource || "").trim(),
+      };
+      if (privateMarketAccess) {
+        body.is_private_market = Boolean(isPrivateMarket);
+      }
       await api("/api/listings", {
         token,
         method: "POST",
-        body: {
-          sport,
-          manufacturer,
-          set_name: setName,
-          year: y,
-          player_name: playerName,
-          team,
-          card_number: cardNumber,
-          card_type: cardType,
-          condition_grade: conditionGrade,
-          price_cents: priceCents,
-          currency: "EUR",
-          description,
-          image_urls: imageUrls,
-          status: "ACTIVE",
-          is_graded: isGraded,
-          grading_company: gradingCompany,
-          grading_grade: gradingGrade,
-          shipping_included: shippingIncluded,
-          shipping_cost_cents: shippingCostCents,
-          market_value_cents: marketValueCents,
-          market_value_source: String(marketValueSource || "").trim(),
-        },
+        body,
       });
-      navigation.navigate("HomeMain");
+      if (route?.params?.afterCreate === "MyListings") {
+        navigation.navigate("MyListings");
+      } else {
+        navigation.navigate("HomeMain");
+      }
     } catch (e) {
       setError(e.message || t("common.error"));
     } finally {
@@ -426,6 +468,22 @@ export default function CreateListingScreen({ navigation }) {
         placeholder={t("createListing.imageUrlsPh")}
         placeholderTextColor={Theme.muted}
       />
+
+      {privateMarketAccess ? (
+        <>
+          <Text style={styles.sectionTitle}>{t("createListing.privateTradeTitle")}</Text>
+          <Text style={styles.sectionSub}>{t("createListing.privateTradeSub")}</Text>
+          <View style={styles.switchRow}>
+            <Text style={styles.switchLabel}>{t("createListing.privateTradeTitle")}</Text>
+            <Switch
+              value={isPrivateMarket}
+              onValueChange={setIsPrivateMarket}
+              trackColor={{ false: Theme.border, true: Theme.heroBg }}
+            />
+          </View>
+        </>
+      ) : null}
+
       {loading ? (
         <ActivityIndicator color={Theme.text} style={styles.spinner} />
       ) : null}
