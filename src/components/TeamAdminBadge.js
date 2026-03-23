@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { Theme } from "../theme";
@@ -26,30 +26,41 @@ export function TeamAdminBadge({ compact = false }) {
   );
 }
 
+const BADGE_MIN_H = 22;
+
 const styles = StyleSheet.create({
   wrap: {
     flexDirection: "row",
     alignItems: "center",
-    alignSelf: "flex-start",
+    justifyContent: "center",
     gap: 5,
     paddingHorizontal: 10,
     paddingVertical: 5,
+    minHeight: BADGE_MIN_H,
     borderRadius: 999,
     backgroundColor: Theme.heroBg,
   },
   wrapCompact: {
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 0,
     gap: 4,
+    minHeight: BADGE_MIN_H,
   },
   txt: {
     fontSize: 12,
     fontWeight: "800",
     color: Theme.onWhite,
     letterSpacing: 0.2,
+    ...Platform.select({
+      android: { includeFontPadding: false },
+    }),
   },
   txtCompact: {
     fontSize: 10,
     fontWeight: "800",
+    lineHeight: 12,
+    ...Platform.select({
+      android: { includeFontPadding: false },
+    }),
   },
 });

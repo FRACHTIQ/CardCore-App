@@ -72,6 +72,16 @@ export async function getDeal(token, dealId) {
   return api(`/api/deals/${dealId}`, { token });
 }
 
+/** Öffentlich: letzte Bewertungen eines Verkäufers (Profil-Snippets). */
+export async function getSellerReviews(sellerId, limit = 3) {
+  const lid = Number(sellerId);
+  if (!Number.isInteger(lid) || lid < 1) {
+    throw new Error("Ungültige Verkäufer-ID.");
+  }
+  const lim = Math.min(Math.max(Number(limit) || 3, 1), 10);
+  return api(`/api/reviews/seller/${lid}?limit=${lim}`, {});
+}
+
 export async function patchDeal(token, dealId, body) {
   return api(`/api/deals/${dealId}`, { token, method: "PATCH", body });
 }
