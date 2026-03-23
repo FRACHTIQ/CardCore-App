@@ -37,6 +37,27 @@ function fmtDate(iso) {
   }
 }
 
+function formatCreatorLine(item, t) {
+  const cb = item.created_by;
+  if (cb && (String(cb.email || "").trim() || String(cb.display_name || "").trim())) {
+    const name = String(cb.display_name || "").trim();
+    const em = String(cb.email || "").trim();
+    if (name && em) {
+      return `${name} · ${em}`;
+    }
+    if (em) {
+      return em;
+    }
+    if (name) {
+      return name;
+    }
+    if (cb.user_id != null) {
+      return t("admin.invitesCreatorIdOnly", { id: cb.user_id });
+    }
+  }
+  return t("admin.invitesCreatorUnknown");
+}
+
 export default function AdminPrivateInvitesScreen({ navigation }) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -283,9 +304,21 @@ export default function AdminPrivateInvitesScreen({ navigation }) {
                     max,
                   })}
                 </Text>
+                <Text style={styles.sectionLabel}>{t("admin.invitesMetaHeader")}</Text>
+                <Text style={styles.metaSmall}>
+                  {t("admin.invitesCreatedAt")}: {fmtDate(item.created_at)}
+                </Text>
+                <Text style={styles.metaSmall}>
+                  {t("admin.invitesCreatedBy")}: {formatCreatorLine(item, t)}
+                </Text>
                 <Text style={styles.metaSmall}>
                   {t("admin.invitesExpires")}: {fmtDate(item.expires_at)}
                 </Text>
+                {item.revoked_at ? (
+                  <Text style={styles.metaSmall}>
+                    {t("admin.invitesRevokedAt")}: {fmtDate(item.revoked_at)}
+                  </Text>
+                ) : null}
                 {item.note ? (
                   <Text style={styles.metaSmall}>{item.note}</Text>
                 ) : null}
@@ -410,6 +443,15 @@ const styles = StyleSheet.create({
   },
   meta: { fontSize: 14, color: Theme.sub, fontWeight: "600" },
   metaSmall: { fontSize: 12, color: Theme.muted, marginTop: 4 },
+  sectionLabel: {
+    marginTop: 10,
+    marginBottom: 2,
+    fontSize: 11,
+    fontWeight: "800",
+    color: Theme.muted,
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
+  },
   redeemSectionTitle: {
     marginTop: 12,
     marginBottom: 6,

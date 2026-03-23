@@ -4,7 +4,7 @@ import WelcomeScreen from "../screens/WelcomeScreen";
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
 import ProfileLegalScreen from "../screens/ProfileLegalScreen";
-import { Theme, stackScreenDark } from "../theme";
+import { AUTH_ROOT_BG, stackScreenAuth } from "../constants/authTheme";
 
 const AuthStack = createNativeStackNavigator();
 
@@ -12,10 +12,11 @@ export function AuthNavigator() {
   const { t } = useTranslation();
   return (
     <AuthStack.Navigator
-      initialRouteName="Welcome"
+      initialRouteName="Login"
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: Theme.bg },
+        /** Hell-Fläche (#F5F5F1) würde durch halbtransparente Login-Zonen scheinen */
+        contentStyle: { backgroundColor: AUTH_ROOT_BG },
       }}
     >
       <AuthStack.Screen name="Welcome" component={WelcomeScreen} />
@@ -25,7 +26,7 @@ export function AuthNavigator() {
         name="LegalTerms"
         component={ProfileLegalScreen}
         options={({ route }) => ({
-          ...stackScreenDark,
+          ...stackScreenAuth,
           headerShown: true,
           title:
             route.params?.kind &&

@@ -105,8 +105,8 @@ export function VurexTabBar({ state, descriptors, navigation, insets }) {
 
 
           const color = focused ? Theme.text : Theme.muted;
-
           const badge = options.tabBarBadge;
+          const isCenterScan = route.name === "InstantScan";
 
           return (
 
@@ -123,20 +123,28 @@ export function VurexTabBar({ state, descriptors, navigation, insets }) {
               onPress={onPress}
 
               style={({ pressed }) => [
-
                 styles.tabBarCell,
-
+                isCenterScan ? styles.tabBarCellCenter : null,
                 pressed ? styles.tabBarCellPressed : null,
-
               ]}
 
               android_ripple={{ color: "rgba(26,26,26,0.08)" }}
 
             >
 
-              <View style={styles.iconWrap}>
-
-                <Ionicons name={iconName} size={24} color={color} />
+              <View style={[styles.iconWrap, isCenterScan ? styles.iconWrapCenter : null]}>
+                {isCenterScan ? (
+                  <View
+                    style={[
+                      styles.centerScanBtn,
+                      focused ? styles.centerScanBtnFocused : null,
+                    ]}
+                  >
+                    <Ionicons name={iconName} size={23} color={Theme.onWhite} />
+                  </View>
+                ) : (
+                  <Ionicons name={iconName} size={24} color={color} />
+                )}
 
                 {badge != null && badge !== "" ? (
 
@@ -154,23 +162,19 @@ export function VurexTabBar({ state, descriptors, navigation, insets }) {
 
               </View>
 
-              <Text
-
-                style={[
-
-                  styles.tabBarLabel,
-
-                  focused ? styles.tabBarLabelFocused : styles.tabBarLabelIdle,
-
-                ]}
-
-                numberOfLines={1}
-
-              >
-
-                {label}
-
-              </Text>
+              {!isCenterScan ? (
+                <Text
+                  style={[
+                    styles.tabBarLabel,
+                    focused ? styles.tabBarLabelFocused : styles.tabBarLabelIdle,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {label}
+                </Text>
+              ) : (
+                <Text style={styles.tabBarCenterLabel}>{label}</Text>
+              )}
 
             </Pressable>
 
@@ -216,7 +220,7 @@ const styles = StyleSheet.create({
 
     alignItems: "center",
 
-    minHeight: 56,
+    minHeight: 62,
 
     paddingHorizontal: 4,
 
@@ -230,6 +234,25 @@ const styles = StyleSheet.create({
 
     justifyContent: "center",
 
+  },
+  iconWrapCenter: {
+    marginBottom: 2,
+  },
+  centerScanBtn: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Theme.text,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  centerScanBtnFocused: {
+    transform: [{ scale: 1.03 }],
   },
 
   badge: {
@@ -283,6 +306,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
 
   },
+  tabBarCellCenter: {
+    marginTop: -18,
+  },
 
   tabBarCellPressed: {
 
@@ -302,6 +328,14 @@ const styles = StyleSheet.create({
 
     marginTop: 4,
 
+  },
+  tabBarCenterLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.2,
+    textAlign: "center",
+    marginTop: 2,
+    color: Theme.text,
   },
 
   tabBarLabelFocused: {

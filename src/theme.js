@@ -1,6 +1,15 @@
 /**
  * App-Palette: warmes Off-White, Anthrazit, Akzent.
  */
+/**
+ * Einheitliche Maße für Haupt-App (Tabs, Listen) — horizontaler Rand wie Auth `UI_PAGE_GUTTER` (22).
+ */
+export const Layout = {
+  screenGutter: 22,
+  /** Zusätzlich zum unteren Safe-Inset: Platz für die Tab-Leiste (Zeile + Polsterung) */
+  tabBarScrollExtra: 56,
+};
+
 export const Theme = {
   bg: "#F5F5F1",
   surface: "#FFFFFF",

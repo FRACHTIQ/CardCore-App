@@ -47,7 +47,8 @@
           "photosPermission": "VUREX nutzt Fotos für deine Karten-Listings.",
           "cameraPermission": "Mit der Kamera fotografierst du Vorder- und Rückseite für die automatische Erkennung."
         }
-      ]
+      ],
+      "expo-video"
     ]
   }
 }

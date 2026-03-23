@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import {
   ActivityIndicator,
@@ -81,6 +81,16 @@ export default function CreateListingScreen({ navigation, route }) {
   const [front, setFront] = useState(null);
   const [back, setBack] = useState(null);
   const [analyzeBusy, setAnalyzeBusy] = useState(false);
+
+  useEffect(() => {
+    const p = route?.params || {};
+    if (p.scannedFront?.base64 && p.scannedFront?.uri) {
+      setFront(p.scannedFront);
+    }
+    if (p.scannedBack?.base64 && p.scannedBack?.uri) {
+      setBack(p.scannedBack);
+    }
+  }, [route?.params]);
 
   async function captureSide(side) {
     const perm = await ImagePicker.requestCameraPermissionsAsync();

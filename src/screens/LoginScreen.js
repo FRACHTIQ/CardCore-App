@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -9,26 +9,38 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   useWindowDimensions,
   View,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { useTranslation } from "react-i18next";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { api } from "../api";
 import { useAuth } from "../AuthContext";
-import { LanguageToggle } from "../components/LanguageToggle";
+import { AuthVideoBackdrop } from "../components/AuthVideoBackdrop";
+import { EmailFormSheet } from "../components/EmailFormSheet";
+import { LandingLogoText } from "../components/LandingLogoText";
 import {
-  OutlinedInput,
-  PasswordToggle,
-} from "../components/OutlinedInput";
-import { SplashStyleFooter } from "../components/SplashStyleFooter";
-import { Theme } from "../theme";
-
-const SUBMIT_BTN_H = 52;
-
-const HEADER_GRAD = ["#F5F5F1", "#EBEBE6", "#E4E4DF"];
+  AUTH_BTN_EMAIL,
+  AUTH_BTN_PRIMARY,
+  AUTH_FORM_SCRIM_GLASS,
+  AUTH_HERO_FOOTER_GAP,
+  AUTH_ROOT_BG,
+  UI_BORDER_INPUT,
+  UI_BORDER_SUBTLE,
+  UI_DIVIDER_LINE,
+  UI_INPUT_FILL,
+  UI_PAGE_GUTTER,
+  UI_RADIUS_LG,
+  UI_RADIUS_MD,
+  getAuthFooterInnerPad,
+  getAuthSheetScrollMaxHeight,
+} from "../constants/authTheme";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -48,15 +60,22 @@ function validateLogin(email, password, t) {
 
 export default function LoginScreen({ navigation }) {
   const { t } = useTranslation();
-  const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const { height: winH } = useWindowDimensions();
   const { setToken } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [loginFooterH, setLoginFooterH] = useState(0);
 
-  const headerH = Math.min(300, Math.max(220, height * 0.3));
+  const sheetScrollMaxH = useMemo(
+    () => getAuthSheetScrollMaxHeight(winH, insets),
+    [winH, insets],
+  );
+  const footerInnerPad = useMemo(() => getAuthFooterInnerPad(winH), [winH]);
 
   async function onSubmit() {
     setError("");
@@ -73,8 +92,10 @@ export default function LoginScreen({ navigation }) {
       });
       await setToken(data.token, {
         role: data.user?.role === "admin" ? "admin" : "user",
+        user: data.user,
       });
       Keyboard.dismiss();
+      setShowEmailForm(false);
     } catch (e) {
       setError(e.message || t("common.error"));
     } finally {
@@ -94,86 +115,168 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <View style={styles.root}>
-      <StatusBar style="dark" />
-      <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
+      <AuthVideoBackdrop />
+      <StatusBar style="light" />
+      <SafeAreaView style={styles.safe} edges={["top"]}>
         <KeyboardAvoidingView
           style={styles.flex}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.scroll}
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={[styles.headerShell, { minHeight: headerH }]}>
-              <LinearGradient
-                colors={HEADER_GRAD}
-                locations={[0, 0.55, 1]}
-                style={StyleSheet.absoluteFill}
-              />
-              <View style={styles.headerInner}>
-                <View style={styles.topRow}>
-                  <View style={[styles.topRowSide, styles.topRowSideStart]}>
-                    {navigation.canGoBack() ? (
-                      <Pressable
-                        onPress={() => navigation.goBack()}
-                        style={styles.backCircle}
-                        hitSlop={12}
-                      >
-                        <Text style={styles.backChevron}>‹</Text>
-                      </Pressable>
-                    ) : (
-                      <View style={styles.backCirclePlaceholder} />
-                    )}
-                  </View>
-                  <View style={[styles.topRowSide, styles.topRowSideEnd]}>
-                    <LanguageToggle variant="light" layout="chips" compact />
-                  </View>
-                </View>
-                <Text style={styles.headline}>{t("login.headline")}</Text>
-                <Text style={styles.subline}>{t("login.subline")}</Text>
-              </View>
+          <View style={styles.mainColumn}>
+            <View
+              style={[
+                styles.heroBlock,
+                loginFooterH > 0 && {
+                  paddingBottom: loginFooterH + AUTH_HERO_FOOTER_GAP,
+                },
+              ]}
+            >
+              <LandingLogoText style={styles.logoMark} />
+              <Text style={styles.eyebrow}>{t("login.eyebrow")}</Text>
+              <Text style={styles.headline}>{t("login.headline")}</Text>
+              <Text style={styles.subline}>{t("login.subline")}</Text>
             </View>
 
-            <View style={styles.formBlock}>
-              <OutlinedInput
-                label={t("login.email")}
-                value={email}
-                onChangeText={setEmail}
-                placeholder={t("login.emailPh")}
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoComplete="email"
-                keyboardType="email-address"
-                textContentType="emailAddress"
-                returnKeyType="next"
-                editable={!loading}
-                labelBackgroundColor={Theme.bg}
-              />
-
-              <OutlinedInput
-                label={t("login.password")}
-                value={password}
-                onChangeText={setPassword}
-                placeholder={t("login.passwordPh")}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoComplete="password"
-                textContentType="password"
-                returnKeyType="go"
-                editable={!loading}
-                onSubmitEditing={onSubmit}
-                labelBackgroundColor={Theme.bg}
-                rightSlot={
-                  <PasswordToggle
-                    visible={showPassword}
-                    onToggle={() => setShowPassword((s) => !s)}
-                    labelShow={t("login.show")}
-                    labelHide={t("login.hide")}
-                  />
+            <View
+              style={[
+                styles.authFooterWrap,
+                {
+                  paddingBottom: insets.bottom + footerInnerPad,
+                },
+              ]}
+              onLayout={(e) => {
+                const h = e.nativeEvent.layout.height;
+                if (h > 0 && Math.abs(h - loginFooterH) > 0.5) {
+                  setLoginFooterH(h);
                 }
-              />
+              }}
+            >
+              <View style={styles.formBlock}>
+                <ScrollView
+                  bounces={false}
+                  keyboardShouldPersistTaps="handled"
+                  nestedScrollEnabled
+                  showsVerticalScrollIndicator={false}
+                  style={{ maxHeight: sheetScrollMaxH }}
+                  contentContainerStyle={styles.loginSheetScrollContent}
+                >
+                  <View style={styles.sheetActions}>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.socialBtn,
+                        styles.socialBtnLight,
+                        pressed ? styles.btnPressed : null,
+                      ]}
+                      onPress={onSocial}
+                    >
+                      <Ionicons name="logo-google" size={16} color="#121317" />
+                      <Text style={styles.socialBtnLightText}>{t("login.socialGoogle")}</Text>
+                    </Pressable>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.socialBtn,
+                        styles.socialBtnLight,
+                        pressed ? styles.btnPressed : null,
+                      ]}
+                      onPress={onSocial}
+                    >
+                      <Ionicons name="logo-apple" size={16} color="#121317" />
+                      <Text style={styles.socialBtnLightText}>{t("login.socialApple")}</Text>
+                    </Pressable>
+
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.btnEmail,
+                        pressed && !loading ? styles.btnPressed : null,
+                      ]}
+                      onPress={() => setShowEmailForm(true)}
+                    >
+                      <View style={styles.btnInner}>
+                        <Text style={styles.btnEmailText}>{t("login.continueEmail")}</Text>
+                      </View>
+                    </Pressable>
+                    <Text style={styles.agreeText}>{t("login.agreementLine")}</Text>
+
+                    <View style={styles.footerRow}>
+                      <Text style={styles.footerQ}>{t("login.footerRegister")}</Text>
+                      <Pressable
+                        onPress={() => navigation.navigate("Register")}
+                        disabled={loading}
+                      >
+                        <Text style={styles.footerLink}>
+                          {t("login.footerRegisterLink")}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                </ScrollView>
+              </View>
+            </View>
+          </View>
+
+          <EmailFormSheet
+            visible={showEmailForm}
+            title={t("login.continueEmail")}
+            onClose={() => setShowEmailForm(false)}
+          >
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+              contentContainerStyle={styles.sheetScroll}
+            >
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>{t("login.divider")}</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              <View style={styles.fieldWrap}>
+                <Text style={styles.fieldLabel}>{t("login.email")}</Text>
+                <TextInput
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder={t("login.emailPh")}
+                  placeholderTextColor="rgba(255,255,255,0.42)"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  autoComplete="email"
+                  keyboardType="email-address"
+                  textContentType="emailAddress"
+                  returnKeyType="next"
+                  editable={!loading}
+                  style={styles.fieldInput}
+                />
+              </View>
+              <View style={styles.fieldWrap}>
+                <Text style={styles.fieldLabel}>{t("login.password")}</Text>
+                <View style={styles.passwordRow}>
+                  <TextInput
+                    value={password}
+                    onChangeText={setPassword}
+                    placeholder={t("login.passwordPh")}
+                    placeholderTextColor="rgba(255,255,255,0.42)"
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    autoComplete="password"
+                    textContentType="password"
+                    returnKeyType="go"
+                    editable={!loading}
+                    onSubmitEditing={onSubmit}
+                    style={[styles.fieldInput, styles.passwordInput]}
+                  />
+                  <Pressable
+                    onPress={() => setShowPassword((s) => !s)}
+                    hitSlop={8}
+                    style={styles.eyeBtn}
+                  >
+                    <Text style={styles.eyeText}>
+                      {showPassword ? t("login.hide") : t("login.show")}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
 
               <Pressable
                 style={styles.forgotLink}
@@ -193,75 +296,16 @@ export default function LoginScreen({ navigation }) {
                 onPress={onSubmit}
                 disabled={loading}
               >
-                <View style={styles.btnGradInner}>
+                <View style={styles.btnInner}>
                   {loading ? (
-                    <ActivityIndicator color={Theme.onWhite} size="small" />
+                    <ActivityIndicator color="#fff" size="small" />
                   ) : (
                     <Text style={styles.btnTextPrimary}>{t("login.submit")}</Text>
                   )}
                 </View>
               </Pressable>
-
-              <View style={styles.socialDividerRow}>
-                <View style={styles.socialLine} />
-                <Text style={styles.socialDividerText}>
-                  {t("login.socialDivider")}
-                </Text>
-                <View style={styles.socialLine} />
-              </View>
-
-              <View style={styles.socialRow}>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.socialBtn,
-                    styles.socialBtnFirst,
-                    pressed ? styles.socialPressed : null,
-                  ]}
-                  onPress={onSocial}
-                >
-                  <View style={styles.socialGlyphBox}>
-                    <Text style={styles.socialGlyphApple}>
-                      {Platform.OS === "ios" ? "\uF8FF" : "A"}
-                    </Text>
-                  </View>
-                  <View style={styles.socialTextCol}>
-                    <Text style={styles.socialBrand}>{t("login.socialApple")}</Text>
-                    <Text style={styles.socialSub}>{t("login.socialAppleSub")}</Text>
-                  </View>
-                </Pressable>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.socialBtn,
-                    styles.socialBtnSecond,
-                    pressed ? styles.socialPressed : null,
-                  ]}
-                  onPress={onSocial}
-                >
-                  <View style={[styles.socialGlyphBox, styles.socialGlyphGoogle]}>
-                    <Text style={styles.socialGlyphG}>G</Text>
-                  </View>
-                  <View style={styles.socialTextCol}>
-                    <Text style={styles.socialBrand}>{t("login.socialGoogle")}</Text>
-                    <Text style={styles.socialSub}>{t("login.socialGoogleSub")}</Text>
-                  </View>
-                </Pressable>
-              </View>
-
-              <View style={styles.footerRow}>
-                <Text style={styles.footerQ}>{t("login.footerRegister")}</Text>
-                <Pressable
-                  onPress={() => navigation.navigate("Register")}
-                  disabled={loading}
-                >
-                  <Text style={styles.footerLink}>
-                    {t("login.footerRegisterLink")}
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-
-            <SplashStyleFooter />
-          </ScrollView>
+            </ScrollView>
+          </EmailFormSheet>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
@@ -269,217 +313,234 @@ export default function LoginScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Theme.bg },
-  safe: { flex: 1 },
+  root: { flex: 1, backgroundColor: AUTH_ROOT_BG },
+  safe: { flex: 1, backgroundColor: "transparent" },
   flex: { flex: 1 },
-  scroll: {
-    flexGrow: 1,
-    paddingBottom: 32,
-  },
-  headerShell: {
-    marginHorizontal: 0,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
-    overflow: "hidden",
-    marginBottom: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Theme.line,
-  },
-  headerInner: {
-    paddingHorizontal: 22,
-    paddingTop: 8,
-    paddingBottom: 22,
-  },
-  topRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 20,
-    minHeight: 44,
-  },
-  topRowSide: {
-    flexDirection: "row",
-    alignItems: "center",
-    minWidth: 0,
-  },
-  topRowSideStart: {
-    justifyContent: "flex-start",
+  mainColumn: {
     flex: 1,
+    position: "relative",
   },
-  topRowSideEnd: {
-    justifyContent: "flex-end",
+  /** Footer: bündig unten im Safe-Bereich, volle Breite — passt sich mit onLayout + Hero-Padding an */
+  authFooterWrap: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  loginSheetScrollContent: {
+    paddingBottom: 8,
+  },
+  sheetActions: {
+    width: "100%",
+  },
+  heroBlock: {
     flex: 1,
-  },
-  backCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Theme.surface,
-    alignItems: "center",
+    minHeight: 0,
+    paddingHorizontal: UI_PAGE_GUTTER,
+    paddingTop: 16,
+    paddingBottom: 12,
     justifyContent: "center",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Theme.border,
   },
-  backCirclePlaceholder: {
-    width: 44,
-    height: 44,
+  logoMark: {
+    marginBottom: 14,
   },
-  backChevron: {
-    color: Theme.text,
-    fontSize: 28,
-    fontWeight: "300",
-    marginTop: -2,
+  eyebrow: {
+    color: "rgba(255,255,255,0.55)",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 2.2,
+    textTransform: "uppercase",
+    textAlign: "center",
+    marginBottom: 10,
   },
   headline: {
-    color: Theme.text,
-    fontSize: 26,
-    fontWeight: "800",
-    lineHeight: 32,
-    letterSpacing: -0.5,
+    color: "rgba(255,255,255,0.92)",
+    fontSize: 24,
+    fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 8,
   },
   subline: {
-    color: Theme.sub,
-    fontSize: 15,
-    lineHeight: 22,
-    marginTop: 10,
+    color: "rgba(255,255,255,0.68)",
+    fontSize: 14,
+    lineHeight: 21,
+    textAlign: "center",
   },
   formBlock: {
-    paddingHorizontal: 22,
-    paddingTop: 8,
+    paddingHorizontal: UI_PAGE_GUTTER,
+    paddingTop: 12,
+    paddingBottom: 4,
+    marginTop: 0,
+    borderTopLeftRadius: UI_RADIUS_LG,
+    borderTopRightRadius: UI_RADIUS_LG,
+    backgroundColor: AUTH_FORM_SCRIM_GLASS,
+    overflow: "hidden",
+    borderWidth: 0,
+  },
+  socialBtn: {
+    minHeight: 44,
+    borderRadius: UI_RADIUS_MD,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginBottom: 6,
+  },
+  socialBtnLight: {
+    backgroundColor: "#fff",
+  },
+  socialBtnLightText: {
+    color: "#0f1014",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  footerRow: {
+    marginTop: 10,
+    marginBottom: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  footerQ: {
+    color: "rgba(255,255,255,0.72)",
+    fontSize: 13,
+  },
+  footerLink: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  divider: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 14,
+  },
+  dividerLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: UI_DIVIDER_LINE,
+  },
+  dividerText: {
+    color: "rgba(255,255,255,0.56)",
+    fontSize: 11,
+    paddingHorizontal: 10,
+    fontWeight: "600",
+    letterSpacing: 0.4,
+  },
+  fieldWrap: {
+    marginBottom: 12,
+  },
+  fieldLabel: {
+    color: "rgba(255,255,255,0.75)",
+    fontSize: 12,
+    marginBottom: 6,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
+  fieldInput: {
+    borderWidth: 1,
+    borderColor: UI_BORDER_INPUT,
+    borderRadius: UI_RADIUS_MD,
+    paddingHorizontal: 14,
+    minHeight: 50,
+    color: "#fff",
+    fontSize: 16,
+    backgroundColor: UI_INPUT_FILL,
+  },
+  passwordRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  passwordInput: {
+    flex: 1,
+    marginRight: 8,
+  },
+  eyeBtn: {
+    minHeight: 50,
+    borderWidth: 1,
+    borderColor: UI_BORDER_SUBTLE,
+    borderRadius: UI_RADIUS_MD,
+    paddingHorizontal: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: UI_INPUT_FILL,
+  },
+  eyeText: {
+    color: "rgba(255,255,255,0.88)",
+    fontSize: 12,
+    fontWeight: "700",
   },
   forgotLink: {
     alignSelf: "flex-end",
-    marginTop: -10,
+    marginTop: -2,
     marginBottom: 14,
     paddingVertical: 4,
   },
   forgotText: {
-    color: Theme.sub,
-    fontSize: 13,
+    color: "rgba(255,255,255,0.72)",
+    fontSize: 12,
     fontWeight: "600",
   },
-  error: { color: Theme.error, marginBottom: 10, fontSize: 14 },
+  error: { color: "#fca5a5", marginBottom: 10, fontSize: 14 },
   btnPrimary: {
-    borderRadius: 16,
-    overflow: "hidden",
-    backgroundColor: Theme.heroBg,
-    minHeight: SUBMIT_BTN_H,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    elevation: 4,
+    borderRadius: UI_RADIUS_MD,
+    minHeight: 44,
+    backgroundColor: AUTH_BTN_PRIMARY,
+    borderWidth: 0,
   },
-  btnGradInner: {
-    minHeight: SUBMIT_BTN_H,
+  btnEmail: {
+    borderRadius: UI_RADIUS_MD,
+    minHeight: 44,
+    backgroundColor: AUTH_BTN_EMAIL,
+    borderWidth: 0,
+  },
+  btnEmailText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  agreeText: {
+    color: "rgba(255,255,255,0.58)",
+    fontSize: 10.5,
+    lineHeight: 15,
+    textAlign: "center",
+    marginTop: 6,
+    marginBottom: 2,
+    paddingHorizontal: 4,
+  },
+  btnInner: {
+    minHeight: 44,
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
   },
   btnTextPrimary: {
-    color: Theme.onWhite,
-    fontSize: 16,
-    fontWeight: "800",
-    letterSpacing: 0.4,
-  },
-  btnPressed: { opacity: 0.92 },
-  socialDividerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 26,
-    marginBottom: 18,
-  },
-  socialLine: {
-    flex: 1,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: Theme.border,
-  },
-  socialDividerText: {
-    color: Theme.muted,
-    fontSize: 12,
-    paddingHorizontal: 12,
-    fontWeight: "600",
-  },
-  socialRow: {
-    flexDirection: "row",
-    alignItems: "stretch",
-  },
-  socialBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 18,
-    backgroundColor: Theme.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Theme.border,
-    minHeight: 58,
-  },
-  socialBtnFirst: {
-    marginRight: 8,
-  },
-  socialBtnSecond: {
-    marginLeft: 8,
-  },
-  socialPressed: {
-    opacity: 0.88,
-  },
-  socialGlyphBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: Theme.soft,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Theme.line,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-  socialGlyphGoogle: {
-    backgroundColor: Theme.white,
-    borderColor: Theme.border,
-  },
-  socialGlyphApple: {
-    color: Theme.text,
-    fontSize: 22,
-    fontWeight: "600",
-    marginTop: Platform.OS === "ios" ? -1 : 0,
-  },
-  socialGlyphG: {
-    color: Theme.text,
-    fontSize: 22,
-    fontWeight: "800",
-    letterSpacing: -0.5,
-  },
-  socialTextCol: {
-    flex: 1,
-    justifyContent: "center",
-  },
-  socialBrand: {
-    color: Theme.text,
-    fontSize: 15,
-    fontWeight: "800",
-    letterSpacing: 0.2,
-  },
-  socialSub: {
-    color: Theme.muted,
-    fontSize: 11,
-    fontWeight: "600",
-    marginTop: 3,
-    letterSpacing: 0.15,
-  },
-  footerRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    flexWrap: "wrap",
-    marginTop: 28,
-    alignItems: "center",
-  },
-  footerQ: { color: Theme.sub, fontSize: 15 },
-  footerLink: {
-    color: Theme.heroBg,
+    color: "#fff",
     fontSize: 15,
     fontWeight: "700",
+    letterSpacing: 0.4,
+  },
+  btnPressed: { opacity: 0.9 },
+  miniRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 6,
+  },
+  miniDot: { color: "rgba(255,255,255,0.62)", fontSize: 8, width: 10 },
+  miniText: {
+    color: "rgba(255,255,255,0.58)",
+    fontSize: 10.2,
+    lineHeight: 14,
+    flex: 1,
+  },
+  sheetScroll: {
+    paddingBottom: 12,
   },
 });
+
+
+
+

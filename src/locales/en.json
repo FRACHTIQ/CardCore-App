@@ -92,8 +92,25 @@
   "tabs": {
     "marketplace": "Marketplace",
     "favorites": "Saved",
+    "scan": "Scan",
     "messages": "Messages",
     "profile": "Profile"
+  },
+  "instantScan": {
+    "title": "Instant Scan",
+    "step": "Now scan: {{side}}",
+    "hint": "Keep the full card inside the frame and hold steady briefly.",
+    "autoIdle": "Auto scan ready",
+    "autoSearching": "Looking for a sharp frame ...",
+    "autoFocusOk": "Focus stable - capturing soon ...",
+    "autoOn": "Auto",
+    "autoOff": "Manual",
+    "backNow": "Front captured. Now scan the back side.",
+    "done": "Both sides captured.",
+    "useForListing": "Use for listing",
+    "permissionTitle": "Camera access required",
+    "permissionBody": "Instant Scan needs camera permission.",
+    "grantCamera": "Allow camera"
   },
   "favorites": {
     "empty": "No saved listings yet."

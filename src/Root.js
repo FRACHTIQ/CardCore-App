@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import Constants from "expo-constants";
+import { ActivityIndicator, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { useAuth } from "./AuthContext";
 import { runBootPermissionChecks } from "./bootChecks";
@@ -12,6 +13,9 @@ import { MainNavigator } from "./navigation/MainNavigator";
 import { API_BASE_URL } from "./config";
 import { compareSemver } from "./utils/compareSemver";
 import MaintenanceGateScreen from "./screens/MaintenanceGateScreen";
+import ProfileLoadErrorScreen from "./screens/ProfileLoadErrorScreen";
+import VerifyEmailScreen from "./screens/VerifyEmailScreen";
+import { AUTH_ROOT_BG } from "./constants/authTheme";
 import { registerExpoPushTokenWithBackend } from "./push/registerExpoPushToken";
 import { usePresenceHeartbeat } from "./hooks/usePresenceHeartbeat";
 
@@ -51,7 +55,13 @@ function applyStatusPayload(data, setGate) {
 }
 
 export function Root() {
-  const { token, ready } = useAuth();
+  const {
+    token,
+    ready,
+    sessionGateLoading,
+    profileError,
+    needsEmailVerification,
+  } = useAuth();
   const [bootReady, setBootReady] = useState(false);
   const [updateModalDismissed, setUpdateModalDismissed] = useState(false);
   const [gate, setGate] = useState({
@@ -143,10 +153,33 @@ export function Root() {
 
   return showMainUi ? (
     <>
-      <NavigationContainer>
-        {token ? <MainNavigator /> : <AuthNavigator />}
-        <StatusBar style="dark" />
-      </NavigationContainer>
+      {!token ? (
+        <NavigationContainer>
+          <AuthNavigator />
+          <StatusBar style="light" />
+        </NavigationContainer>
+      ) : sessionGateLoading ? (
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: AUTH_ROOT_BG,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <ActivityIndicator color="#ffffff" size="large" />
+          <StatusBar style="light" />
+        </View>
+      ) : profileError ? (
+        <ProfileLoadErrorScreen />
+      ) : needsEmailVerification ? (
+        <VerifyEmailScreen />
+      ) : (
+        <NavigationContainer>
+          <MainNavigator />
+          <StatusBar style="dark" />
+        </NavigationContainer>
+      )}
       <UpdateAvailableModal
         visible={showUpdateModal}
         requiredMinVersion={gate.requiredMinVersion}

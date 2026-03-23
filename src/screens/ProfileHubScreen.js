@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -16,7 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import { useTranslation } from "react-i18next";
-import { Theme } from "../theme";
+import { Layout, Theme } from "../theme";
 import { api } from "../api";
 import { useAuth } from "../AuthContext";
 import { profileInitial } from "../utils/profileInitial";
@@ -109,11 +109,15 @@ export default function ProfileHubScreen({ navigation }) {
     }, [token])
   );
 
-  const scrollContent = {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: Math.max(insets.bottom, 16) + 24,
-  };
+  const scrollContent = useMemo(
+    () => ({
+      paddingLeft: Math.max(insets.left, Layout.screenGutter),
+      paddingRight: Math.max(insets.right, Layout.screenGutter),
+      paddingTop: 12,
+      paddingBottom: insets.bottom + Layout.tabBarScrollExtra,
+    }),
+    [insets.left, insets.right, insets.bottom],
+  );
 
   const displayName =
     meUser && String(meUser.display_name || "").trim()
@@ -423,7 +427,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: Theme.bg,
-    paddingHorizontal: 24,
+    paddingHorizontal: Layout.screenGutter,
   },
   headerRow: {
     flexDirection: "row",

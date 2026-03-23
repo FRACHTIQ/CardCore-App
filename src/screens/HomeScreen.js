@@ -14,17 +14,17 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  useWindowDimensions,
   View,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { CARD_TYPES } from "../config";
 import { api } from "../api";
 import { useAuth } from "../AuthContext";
-import { Theme } from "../theme";
+import { Layout, Theme } from "../theme";
 import { getListingThumbnailUri } from "../utils/listingImages";
 import { profileInitial } from "../utils/profileInitial";
 import { resolveUserAvatarUri } from "../utils/resolveUserAvatarUri";
@@ -81,20 +81,20 @@ export default function HomeScreen({ navigation }) {
   const { t, i18n } = useTranslation();
   const { token } = useAuth();
   const insets = useSafeAreaInsets();
-  const { width: windowWidth } = useWindowDimensions();
   const flatListRef = useRef(null);
 
-  /** Randabstand: schmal und an Bildschirmbreite gekoppelt (mehr nutzbarer Platz). */
-  const screenPad = useMemo(() => {
-    const g = Math.max(
-      8,
-      Math.min(18, Math.round(windowWidth * 0.028))
-    );
-    return {
-      paddingLeft: Math.max(insets.left, g),
-      paddingRight: Math.max(insets.right, g),
-    };
-  }, [windowWidth, insets.left, insets.right]);
+  const screenPad = useMemo(
+    () => ({
+      paddingLeft: Math.max(insets.left, Layout.screenGutter),
+      paddingRight: Math.max(insets.right, Layout.screenGutter),
+    }),
+    [insets.left, insets.right],
+  );
+
+  const listBottomPad = useMemo(
+    () => insets.bottom + Layout.tabBarScrollExtra,
+    [insets.bottom],
+  );
 
   const sortOptions = useMemo(
     () => [
@@ -597,8 +597,9 @@ export default function HomeScreen({ navigation }) {
       : "home.highlightTrending";
 
   const listHeader = (
-    <View style={{ paddingTop: insets.top + 6 }}>
-      <View style={styles.dashTop}>
+    <View style={{ paddingTop: insets.top + 8 }}>
+      <View style={styles.dashHeaderCard}>
+        <View style={styles.dashTop}>
         <Pressable
           onPress={openProfile}
           style={({ pressed }) => [
@@ -665,11 +666,18 @@ export default function HomeScreen({ navigation }) {
           accessibilityRole="button"
           accessibilityLabel={t("nav.newListing")}
         >
-          <Ionicons name="add" size={26} color={Theme.text} />
+          <Ionicons name="add" size={26} color={Theme.onWhite} />
         </Pressable>
       </View>
+      </View>
 
-      <View style={styles.balanceCard}>
+      <LinearGradient
+        colors={["#2a2b34", Theme.heroBg, "#121318"]}
+        locations={[0, 0.45, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.balanceCard}
+      >
         <View style={styles.balanceCardTitleRow}>
           <Text style={styles.balanceLabel}>{t("home.portfolioLabel")}</Text>
           <View style={styles.balanceTrendPill}>
@@ -685,7 +693,7 @@ export default function HomeScreen({ navigation }) {
         <Text style={styles.balanceHint} numberOfLines={2}>
           {t("home.portfolioHint")}
         </Text>
-      </View>
+      </LinearGradient>
 
       <View style={styles.dashDivider} />
 
@@ -786,7 +794,11 @@ export default function HomeScreen({ navigation }) {
         renderItem={renderItem}
         ListHeaderComponent={listHeader}
         ListEmptyComponent={listEmpty}
-        contentContainerStyle={[styles.listContent, screenPad]}
+        contentContainerStyle={[
+          styles.listContent,
+          screenPad,
+          { paddingBottom: listBottomPad },
+        ]}
         showsVerticalScrollIndicator={false}
         initialNumToRender={10}
         windowSize={7}
@@ -816,7 +828,10 @@ export default function HomeScreen({ navigation }) {
             <View
               style={[
                 styles.sheet,
-                { paddingBottom: Math.max(insets.bottom, 16) + 8 },
+                {
+                  paddingHorizontal: Layout.screenGutter,
+                  paddingBottom: Math.max(insets.bottom, 16) + 8,
+                },
               ]}
             >
               <Text style={styles.sheetTitle}>{t("home.moreFilters")}</Text>
@@ -952,18 +967,32 @@ export default function HomeScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: Theme.bg },
-  dashTop: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    paddingBottom: 4,
-  },
-  dashAvatarWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  dashHeaderCard: {
     backgroundColor: Theme.surface,
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 12,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: Theme.line,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  dashTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingBottom: 0,
+  },
+  dashAvatarWrap: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: Theme.surface,
+    borderWidth: 2,
+    borderColor: Theme.soft,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
@@ -974,7 +1003,7 @@ const styles = StyleSheet.create({
   dashAvatarImg: {
     width: "100%",
     height: "100%",
-    borderRadius: 24,
+    borderRadius: 25,
   },
   dashAvatarLetter: {
     fontSize: 18,
@@ -984,40 +1013,41 @@ const styles = StyleSheet.create({
   dashTopCenter: {
     flex: 1,
     minWidth: 0,
-    marginLeft: 14,
+    marginLeft: 12,
     marginRight: 8,
     justifyContent: "center",
-    paddingTop: 2,
+    paddingTop: 0,
   },
   dashGreeting: {
-    fontSize: 20,
-    fontWeight: "600",
+    fontSize: 21,
+    fontWeight: "700",
     color: Theme.text,
-    letterSpacing: -0.35,
-    lineHeight: 26,
+    letterSpacing: -0.45,
+    lineHeight: 27,
   },
   dashSub: {
-    marginTop: 4,
+    marginTop: 3,
     fontSize: 12,
     fontWeight: "500",
     color: Theme.muted,
     lineHeight: 16,
+    opacity: 0.92,
   },
   balanceCard: {
-    marginTop: 14,
-    marginBottom: 2,
-    borderRadius: 18,
-    backgroundColor: Theme.heroBg,
-    paddingHorizontal: 18,
-    paddingTop: 16,
-    paddingBottom: 14,
+    marginTop: 0,
+    marginBottom: 4,
+    borderRadius: 22,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 16,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.14,
+    shadowRadius: 16,
+    elevation: 5,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: "rgba(255,255,255,0.1)",
+    overflow: "hidden",
   },
   balanceCardTitleRow: {
     flexDirection: "row",
@@ -1061,16 +1091,16 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
   clubGlyph: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.55)",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Theme.soft,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(26,26,26,0.06)",
+    borderColor: Theme.line,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 4,
-    marginRight: 4,
+    marginTop: 0,
+    marginRight: 6,
   },
   clubGlyphActive: {
     borderColor: "rgba(201, 165, 116, 0.35)",
@@ -1083,25 +1113,24 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Theme.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Theme.line,
+    backgroundColor: Theme.text,
+    borderWidth: 0,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 2,
+    marginTop: 0,
   },
   dashPlusBtnAfterClub: {
     marginLeft: 0,
   },
   dashPlusBtnPressed: {
-    backgroundColor: Theme.soft,
-    opacity: 0.95,
+    opacity: 0.88,
   },
   dashDivider: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: Theme.line,
-    marginTop: 12,
-    marginBottom: 4,
+    marginTop: 16,
+    marginBottom: 8,
+    opacity: 0.85,
   },
   portfolioDayRow: {
     flexDirection: "row",
@@ -1145,36 +1174,42 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   highlightSection: {
-    marginBottom: 10,
-    marginTop: 10,
+    marginBottom: 12,
+    marginTop: 14,
   },
   highlightTitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "800",
-    color: Theme.text,
-    marginBottom: 10,
-    letterSpacing: 0.4,
+    color: Theme.muted,
+    marginBottom: 12,
+    letterSpacing: 1.1,
+    textTransform: "uppercase",
   },
   highlightScroll: {
     paddingRight: 8,
     paddingBottom: 4,
   },
   highlightCard: {
-    width: 118,
-    marginRight: 10,
+    width: 122,
+    marginRight: 12,
     backgroundColor: Theme.surface,
-    borderRadius: 12,
-    padding: 8,
+    borderRadius: 16,
+    padding: 10,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Theme.border,
+    borderColor: Theme.line,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   highlightCardPressed: {
     opacity: 0.92,
   },
   highlightThumb: {
     width: "100%",
-    height: 74,
-    borderRadius: 8,
+    height: 76,
+    borderRadius: 10,
     backgroundColor: Theme.card,
   },
   highlightName: {
@@ -1191,8 +1226,8 @@ const styles = StyleSheet.create({
     fontVariant: ["tabular-nums"],
   },
   searchSectionWrap: {
-    paddingTop: 8,
-    paddingBottom: 4,
+    paddingTop: 4,
+    paddingBottom: 6,
   },
   rowTitleRow: {
     flexDirection: "row",
@@ -1222,16 +1257,16 @@ const styles = StyleSheet.create({
   /** Nur die Suchzeile als Pille — Chips und Meta liegen außerhalb, wirkt luftiger. */
   searchBarPill: {
     backgroundColor: Theme.surface,
-    borderRadius: 999,
+    borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: Theme.line,
-    paddingHorizontal: 14,
-    paddingVertical: Platform.OS === "ios" ? 2 : 0,
+    paddingHorizontal: 16,
+    paddingVertical: Platform.OS === "ios" ? 4 : 2,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 2,
   },
   searchFieldRow: {
     flexDirection: "row",
@@ -1264,10 +1299,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.12,
   },
   chip: {
-    paddingHorizontal: 11,
-    paddingVertical: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
     borderRadius: 999,
-    marginRight: 6,
+    marginRight: 8,
     backgroundColor: Theme.soft,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: "transparent",
@@ -1292,18 +1327,22 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   listContent: {
-    paddingBottom: 48,
     flexGrow: 1,
   },
   rowCardWrap: {
     flexDirection: "row",
     alignItems: "stretch",
     backgroundColor: Theme.surface,
-    borderRadius: 16,
-    marginBottom: 10,
+    borderRadius: 18,
+    marginBottom: 12,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Theme.border,
+    borderColor: Theme.line,
     overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 1,
   },
   rowCardMain: {
     flex: 1,
@@ -1412,7 +1451,6 @@ const styles = StyleSheet.create({
     backgroundColor: Theme.surface,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingHorizontal: 20,
     paddingTop: 16,
     maxHeight: "88%",
     borderTopWidth: StyleSheet.hairlineWidth,

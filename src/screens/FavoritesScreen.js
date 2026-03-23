@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -11,7 +11,8 @@ import {
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useTranslation } from "react-i18next";
-import { Theme } from "../theme";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Layout, Theme } from "../theme";
 import { api } from "../api";
 import { useAuth } from "../AuthContext";
 import { getListingThumbnailUri } from "../utils/listingImages";
@@ -26,11 +27,22 @@ function formatPrice(cents, currency) {
 
 export default function FavoritesScreen({ navigation }) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const { token } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+
+  const listContentStyle = useMemo(
+    () => ({
+      paddingTop: 12,
+      paddingLeft: Math.max(insets.left, Layout.screenGutter),
+      paddingRight: Math.max(insets.right, Layout.screenGutter),
+      paddingBottom: insets.bottom + Layout.tabBarScrollExtra,
+    }),
+    [insets.left, insets.right, insets.bottom],
+  );
 
   const load = useCallback(async () => {
     if (!token) {
@@ -144,8 +156,7 @@ const styles = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: Theme.bg },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   muted: { color: Theme.muted },
-  error: { padding: 16, color: Theme.error },
-  listContent: { padding: 16, paddingBottom: 32 },
+  error: { padding: Layout.screenGutter, color: Theme.error },
   row: {
     flexDirection: "row",
     alignItems: "stretch",

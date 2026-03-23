@@ -6,6 +6,7 @@ import { HomeStackNavigator } from "./HomeStackNavigator";
 import { FavoriteStackNavigator } from "./FavoriteStackNavigator";
 import MessagesScreen from "../screens/MessagesScreen";
 import { ProfileStackNavigator } from "./ProfileStackNavigator";
+import InstantScanScreen from "../screens/InstantScanScreen";
 
 const MainTabs = createBottomTabNavigator();
 
@@ -28,6 +29,14 @@ export function MainNavigator() {
         name="Merkzettel"
         component={FavoriteStackNavigator}
         options={{ tabBarLabel: t("tabs.favorites") }}
+      />
+      <MainTabs.Screen
+        name="InstantScan"
+        component={InstantScanScreen}
+        options={{
+          tabBarLabel: t("tabs.scan"),
+          headerShown: false,
+        }}
       />
       <MainTabs.Screen
         name="Messages"

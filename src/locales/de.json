@@ -92,8 +92,25 @@
   "tabs": {
     "marketplace": "Marktplatz",
     "favorites": "Merkzettel",
+    "scan": "Scan",
     "messages": "Nachrichten",
     "profile": "Profil"
+  },
+  "instantScan": {
+    "title": "Instant Scan",
+    "step": "Jetzt: {{side}} scannen",
+    "hint": "Halte die Karte voll im Rahmen und kurz ruhig.",
+    "autoIdle": "Auto-Scan bereit",
+    "autoSearching": "Suche scharfes Bild im Rahmen ...",
+    "autoFocusOk": "Fokus stabil - loese gleich aus ...",
+    "autoOn": "Auto",
+    "autoOff": "Manuell",
+    "backNow": "Vorderseite erfasst. Jetzt Rueckseite scannen.",
+    "done": "Beide Seiten erfasst.",
+    "useForListing": "Fuer Listing uebernehmen",
+    "permissionTitle": "Kamera-Zugriff noetig",
+    "permissionBody": "Fuer Instant Scan brauchen wir die Kamera.",
+    "grantCamera": "Kamera erlauben"
   },
   "favorites": {
     "empty": "Noch keine Favoriten."

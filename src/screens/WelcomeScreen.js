@@ -1,9 +1,24 @@
-import { ImageBackground, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  ImageBackground,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTranslation } from "react-i18next";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { LanguageToggle } from "../components/LanguageToggle";
+import {
+  AUTH_ROOT_BG,
+  UI_PAGE_GUTTER,
+  getAuthFooterPaddingBottom,
+} from "../constants/authTheme";
 import { Theme } from "../theme";
 
 const HERO_URI =
@@ -11,6 +26,10 @@ const HERO_URI =
 
 export default function WelcomeScreen({ navigation }) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+  const { height: winH } = useWindowDimensions();
+  const footerPadBottom = getAuthFooterPaddingBottom(winH, insets);
+
   return (
     <View style={styles.root}>
       <StatusBar style="light" />
@@ -31,13 +50,13 @@ export default function WelcomeScreen({ navigation }) {
           locations={[0, 0.45, 1]}
           style={styles.heroTopFade}
         />
-        <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
+        <SafeAreaView style={styles.safe} edges={["top"]}>
           <View style={styles.topBar}>
             <Text style={styles.langLabel}>{t("welcome.languageLabel")}</Text>
             <LanguageToggle variant="dark" layout="segmented" />
           </View>
           <View style={styles.spacer} />
-          <View style={styles.footer}>
+          <View style={[styles.footer, { paddingBottom: footerPadBottom }]}>
             <Text style={styles.logoMark}>VUREX</Text>
             <Text style={styles.tagline}>
               {t("welcome.taglineLine1")}
@@ -98,7 +117,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 22,
+    paddingHorizontal: UI_PAGE_GUTTER,
     paddingTop: 6,
     paddingBottom: 4,
     zIndex: 2,
@@ -112,8 +131,7 @@ const styles = StyleSheet.create({
   },
   spacer: { flex: 1 },
   footer: {
-    paddingHorizontal: 22,
-    paddingBottom: 8,
+    paddingHorizontal: UI_PAGE_GUTTER,
   },
   logoMark: {
     color: "#ffffff",

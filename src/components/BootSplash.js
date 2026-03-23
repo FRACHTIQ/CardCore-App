@@ -1,42 +1,42 @@
 import { useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { StatusBar } from "expo-status-bar";
-import { Animated, Easing, StyleSheet, Text, View } from "react-native";
+import { Animated, Easing, Platform, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  SPLASH_MS,
-  SPLASH_BG,
-  BAR_FILL,
-  BAR_TRACK,
-  MADE_MUTED,
-  MADE_HEART,
-  MADE_BRAND,
-} from "../constants/splash";
+import { SPLASH_MS, SPLASH_BG, BAR_FILL, BAR_TRACK } from "../constants/splash";
 
-export function BootSplash() {
-  const { t } = useTranslation();
+const mono = Platform.select({
+  ios: "Menlo",
+  android: "monospace",
+  default: "monospace",
+});
+
+/**
+ * @param {{ progressDurationMs?: number }} [props]
+ * Standard = SPLASH_MS (5s Root-Boot). Kurz für i18n in App.js.
+ */
+export function BootSplash({ progressDurationMs } = {}) {
+  const duration =
+    typeof progressDurationMs === "number" && progressDurationMs > 0
+      ? progressDurationMs
+      : SPLASH_MS;
   const progress = useRef(new Animated.Value(0)).current;
   const [pct, setPct] = useState(0);
 
   useEffect(() => {
-    setPct(0);
     progress.setValue(0);
-    const listenerId = progress.addListener(({ value }) => {
-      setPct(Math.round(value * 100));
-    });
     Animated.timing(progress, {
       toValue: 1,
-      duration: SPLASH_MS,
-      easing: Easing.out(Easing.cubic),
+      duration,
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
       useNativeDriver: false,
-    }).start(({ finished }) => {
-      if (finished) {
-        setPct(100);
-      }
+    }).start();
+  }, [progress, duration]);
+
+  useEffect(() => {
+    const id = progress.addListener(({ value }) => {
+      setPct(Math.min(100, Math.round(value * 100)));
     });
-    return () => {
-      progress.removeListener(listenerId);
-    };
+    return () => progress.removeListener(id);
   }, [progress]);
 
   const barWidth = progress.interpolate({
@@ -45,121 +45,70 @@ export function BootSplash() {
   });
 
   return (
-    <View style={styles.boot}>
-      <StatusBar style="dark" />
-      <View style={styles.bootCenter}>
-        <View style={styles.bootInner}>
-          <Text style={styles.bootLogo}>VUREX</Text>
-          <Text style={styles.pctText}>{pct}%</Text>
-          <View style={styles.progressTrack}>
-            <Animated.View
-              style={[
-                styles.progressFillWrap,
-                { width: barWidth, backgroundColor: BAR_FILL },
-              ]}
-            />
+    <View style={[styles.root, { backgroundColor: SPLASH_BG }]}>
+      <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
+        <StatusBar style="light" />
+        <View style={styles.center}>
+          <Text style={styles.mark}>
+            <Text style={styles.pipe}>| </Text>
+            <Text style={styles.word}>VUREX</Text>
+          </Text>
+          <View style={styles.barTrack}>
+            <Animated.View style={[styles.barFill, { width: barWidth }]} />
           </View>
+          <Text style={styles.pct}>{pct}%</Text>
         </View>
-      </View>
-      <SafeAreaView edges={["bottom"]} style={styles.bootFooter}>
-        <View style={styles.bootFooterDecor} />
-        <Text style={styles.bootFooterLine}>
-          <Text style={styles.bootFooterMuted}>{t("splash.footerWith")}</Text>
-          <Text style={styles.bootFooterAccent}>{t("splash.footerLove")}</Text>
-          <Text style={styles.bootFooterMuted}>{t("splash.footerInBerlin")}</Text>
-          <Text style={styles.bootFooterSep}>{t("splash.footerSep")}</Text>
-          <Text style={styles.bootFooterBrand}>{t("splash.footerCompany")}</Text>
-        </Text>
-        <Text style={styles.bootFooterNames}>{t("splash.names")}</Text>
       </SafeAreaView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  boot: {
+  root: {
     flex: 1,
-    backgroundColor: SPLASH_BG,
   },
-  bootCenter: {
+  safe: {
+    flex: 1,
+  },
+  center: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: 40,
   },
-  bootInner: {
-    width: "100%",
-    maxWidth: 280,
-    paddingHorizontal: 28,
-    alignItems: "center",
+  mark: {
+    marginBottom: 28,
   },
-  bootLogo: {
-    color: "#1A1A1A",
-    fontSize: 42,
+  pipe: {
+    color: "rgba(255,255,255,0.45)",
+    fontSize: 32,
+    fontWeight: "200",
+    letterSpacing: 0,
+  },
+  word: {
+    color: "#FAFAFA",
+    fontSize: 32,
     fontWeight: "800",
-    fontStyle: "italic",
-    letterSpacing: -1,
-    marginBottom: 20,
+    letterSpacing: 3,
   },
-  pctText: {
-    color: "#1A1A1A",
-    fontSize: 15,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-    marginBottom: 10,
-    fontVariant: ["tabular-nums"],
-  },
-  progressTrack: {
+  barTrack: {
     width: "100%",
-    height: 4,
-    backgroundColor: BAR_TRACK,
+    maxWidth: 220,
+    height: 3,
     borderRadius: 2,
+    backgroundColor: BAR_TRACK,
     overflow: "hidden",
   },
-  progressFillWrap: {
+  barFill: {
     height: "100%",
     borderRadius: 2,
+    backgroundColor: BAR_FILL,
   },
-  bootFooter: {
-    alignItems: "center",
-    paddingTop: 4,
-    paddingBottom: 6,
-    paddingHorizontal: 20,
-  },
-  bootFooterDecor: {
-    width: 36,
-    height: 1,
-    backgroundColor: "#D4D4CE",
-    opacity: 0.9,
-    marginBottom: 10,
-  },
-  bootFooterLine: {
-    textAlign: "center",
-    fontSize: 11,
-    lineHeight: 16,
-    letterSpacing: 0.35,
-  },
-  bootFooterMuted: {
-    color: MADE_MUTED,
-    fontWeight: "500",
-  },
-  bootFooterAccent: {
-    color: MADE_HEART,
-    fontWeight: "700",
-  },
-  bootFooterSep: {
-    color: "#52525b",
-    fontWeight: "400",
-  },
-  bootFooterBrand: {
-    color: MADE_BRAND,
-    fontWeight: "700",
-    letterSpacing: 0.2,
-  },
-  bootFooterNames: {
-    marginTop: 6,
-    color: "#6b7280",
-    fontSize: 10,
-    fontWeight: "600",
-    letterSpacing: 0.4,
+  pct: {
+    marginTop: 14,
+    fontFamily: mono,
+    fontSize: 12,
+    color: "rgba(255,255,255,0.38)",
+    fontVariant: ["tabular-nums"],
   },
 });

@@ -1,9 +1,12 @@
-/** Boot-Splash & Fortschrittsbalken (Start-Sequenz) */
-export const SPLASH_MS = 2000;
+/** Boot-Splash — Farben an Auth-Theme gekoppelt */
+import { AUTH_ROOT_BG } from "./authTheme";
 
-export const SPLASH_BG = "#F5F5F1";
-export const BAR_FILL = "#15803d";
-export const BAR_TRACK = "#D4D4CE";
-export const MADE_MUTED = "#8E8E8E";
-export const MADE_HEART = "#1A1A1A";
-export const MADE_BRAND = "#5C5C5C";
+/** Haupt-Boot (Root): Progress + API warten mindestens so lange */
+export const SPLASH_MS = 5000;
+
+/** Kurz beim i18n-Start in App.js (kein zweites 5s-Splash direkt davor) */
+export const MIN_APP_SPLASH_MS = 900;
+
+export const SPLASH_BG = AUTH_ROOT_BG;
+export const BAR_FILL = "#E8E8EA";
+export const BAR_TRACK = "rgba(255,255,255,0.12)";
