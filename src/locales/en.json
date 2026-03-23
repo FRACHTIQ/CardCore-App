@@ -252,6 +252,7 @@
     "noBase64": "Could not read the image. Please take the photo again.",
     "imageUrlsLabel": "Image URLs (comma or line)",
     "imageUrlsPh": "https://…",
+    "coverFromScanTooLarge": "Front photo is too large to embed. Use “Image URLs” with a link, or take a smaller photo.",
     "privateTradeTitle": "Inner circle only",
     "privateTradeSub": "Hidden from the open marketplace – only in the personal view of invited users.",
     "publish": "Publish listing",

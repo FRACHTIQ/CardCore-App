@@ -252,6 +252,7 @@
     "noBase64": "Bild konnte nicht gelesen werden. Bitte erneut fotografieren.",
     "imageUrlsLabel": "Bild-URLs (Komma oder Zeile)",
     "imageUrlsPh": "https://…",
+    "coverFromScanTooLarge": "Vorderseiten-Foto ist zu groß für den direkten Upload. Bitte „Bild-URLs“ mit einem Link nutzen oder ein kleineres Foto aufnehmen.",
     "privateTradeTitle": "Nur im Kreis",
     "privateTradeSub": "Wird nicht im offenen Marktplatz gezeigt – nur in der persönlichen Ansicht eingeladener Nutzer.",
     "publish": "Listing veröffentlichen",

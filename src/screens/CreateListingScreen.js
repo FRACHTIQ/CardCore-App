@@ -20,6 +20,9 @@ import { Theme } from "../theme";
 import { api, analyzeCardImages } from "../api";
 import { useAuth } from "../AuthContext";
 
+/** Data-URL-Obergrenze pro Bild (Server/DB); ~entspricht großem JPEG in Base64 */
+const MAX_LISTING_COVER_DATA_URL_CHARS = 1_200_000;
+
 export default function CreateListingScreen({ navigation, route }) {
   const { t } = useTranslation();
   const { token } = useAuth();
@@ -200,10 +203,21 @@ export default function CreateListingScreen({ navigation, route }) {
       marketValueCents = Math.round(mvEur * 100);
     }
 
-    const imageUrls = imageUrlsRaw
+    let imageUrls = imageUrlsRaw
       .split(/[\n,]/)
       .map((s) => s.trim())
       .filter(Boolean);
+
+    /* Scan-Fotos werden sonst nur für die KI genutzt – ohne URL-Feld erscheint ein Platzhalter. */
+    if (imageUrls.length === 0 && front?.base64) {
+      const mime = String(front.mime || "image/jpeg").trim() || "image/jpeg";
+      const dataUrl = `data:${mime};base64,${front.base64}`;
+      if (dataUrl.length > MAX_LISTING_COVER_DATA_URL_CHARS) {
+        setError(t("createListing.coverFromScanTooLarge"));
+        return;
+      }
+      imageUrls = [dataUrl];
+    }
 
     setLoading(true);
     try {

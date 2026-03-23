@@ -1,9 +1,10 @@
 /**
  * Thumbnail für Listings: erstes Bild aus image_urls oder neutraler Platzhalter.
+ * (Früher Unsplash-Motiv – wirkte wie echtes Listing, z. B. Auto.)
  */
 
 export const LISTING_PLACEHOLDER_IMAGE =
-  "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?w=400&q=80";
+  "https://placehold.co/600x840/2a2a2a/737373/png?text=VUREX";
 
 export function getListingThumbnailUri(listing) {
   const u =
