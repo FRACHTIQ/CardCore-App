@@ -236,7 +236,7 @@
     "imageUrlsLabel": "Bild-URLs (Komma oder Zeile)",
     "imageUrlsPh": "https://…",
     "privateTradeTitle": "Nur im Kreis",
-    "privateTradeSub": "Nur für eingeladene Mitglieder im geschlossenen Bereich sichtbar.",
+    "privateTradeSub": "Wird nicht im offenen Marktplatz gezeigt – nur in der persönlichen Ansicht eingeladener Nutzer.",
     "publish": "Listing veröffentlichen",
     "yearInvalid": "Jahr ungültig.",
     "priceInvalid": "Preis ungültig.",
@@ -284,10 +284,10 @@
     "codePh": "CODE HIER EINGEBEN",
     "codeTooShort": "Bitte den vollständigen Code eingeben.",
     "redeem": "Code einlösen",
-    "success": "Willkommen. Oben am Rand siehst du ein kleines Symbol – damit wechselst du in den geschlossenen Bereich.",
+    "success": "Willkommen. Oben neben „Neu“ findest du ein dezentes Symbol – nur du siehst es.",
     "alreadyMember": "Du bist bereits dabei.",
     "memberTitle": "Du bist dabei",
-    "memberSub": "Tippe oben neben „Neu“ auf das kleine Symbol – nur für dich sichtbar.",
+    "memberSub": "Oben neben „Neu“: dezentes Symbol zum Umschalten.",
     "foot": "Keinen Code? Frag in der Community nach oder schreib uns über den Support im Profil."
   },
   "home": {
@@ -301,9 +301,8 @@
     "greetingNightShort": "Gute Nacht",
     "dashboardTitle": "VUREX",
     "dashboardSubtitle": "Marktplatz · Listings durchsuchen und filtern",
-    "clubRoomA11y": "Geschlossener Bereich",
-    "clubRoomA11yHint": "Antippen, um zwischen Marktplatz und geschlossenem Bereich zu wechseln.",
-    "clubRoomActiveHint": "Geschlossener Bereich",
+    "clubLensA11y": "Persönliche Ansicht",
+    "clubLensA11yHint": "Wechselt deine Angebotsliste. Nur für dich sichtbar.",
     "heroHeadline": "Marktplatz",
     "heroTagline": "Die Plattform für Trading & Sammelkarten.",
     "kicker": "VUREX",
@@ -579,7 +578,13 @@
     "invitesCopyFailed": "Kopieren nicht möglich.",
     "invitesRedeemedBy": "Eingelöst von",
     "invitesRedeemedEmpty": "Noch niemand.",
-    "openPrivateInvites": "Private-Trade-Einladungen"
+    "openPrivateInvites": "Private-Trade-Einladungen",
+    "invitesMetaHeader": "Protokoll",
+    "invitesCreatedAt": "Erstellt",
+    "invitesCreatedBy": "Erstellt von",
+    "invitesCreatorUnknown": "Unbekannt",
+    "invitesCreatorIdOnly": "Nutzer #{{id}}",
+    "invitesRevokedAt": "Widerrufen"
   },
   "gate": {
     "updateTitle": "Update",

@@ -639,15 +639,17 @@ export default function HomeScreen({ navigation }) {
             }
             hitSlop={10}
             accessibilityRole="button"
-            accessibilityLabel={t("home.clubRoomA11y")}
-            accessibilityHint={t("home.clubRoomA11yHint")}
+            accessibilityLabel={t("home.clubLensA11y")}
+            accessibilityHint={t("home.clubLensA11yHint")}
             accessibilityState={{ selected: feedScope === "private" }}
           >
             <Ionicons
-              name="sparkles"
-              size={19}
+              name={feedScope === "private" ? "sparkles" : "sparkles-outline"}
+              size={18}
               color={
-                feedScope === "private" ? Theme.accentGold : Theme.muted
+                feedScope === "private"
+                  ? Theme.accentGold
+                  : "rgba(142,142,142,0.85)"
               }
             />
           </Pressable>
@@ -667,14 +669,7 @@ export default function HomeScreen({ navigation }) {
         </Pressable>
       </View>
 
-      <View
-        style={[
-          styles.balanceCard,
-          privateAccess && feedScope === "private"
-            ? styles.balanceCardClub
-            : null,
-        ]}
-      >
+      <View style={styles.balanceCard}>
         <View style={styles.balanceCardTitleRow}>
           <Text style={styles.balanceLabel}>{t("home.portfolioLabel")}</Text>
           <View style={styles.balanceTrendPill}>
@@ -719,11 +714,6 @@ export default function HomeScreen({ navigation }) {
         <Text style={styles.searchMetaLine}>
           {t("home.offersCountLabel", { count: total })}
         </Text>
-        {privateAccess && feedScope === "private" ? (
-          <Text style={styles.clubRoomWhisper}>
-            {t("home.clubRoomActiveHint")}
-          </Text>
-        ) : null}
       </View>
 
       {highlightItems.length > 0 ? (
@@ -1070,30 +1060,21 @@ const styles = StyleSheet.create({
     marginTop: 8,
     lineHeight: 17,
   },
-  balanceCardClub: {
-    borderColor: "rgba(201, 165, 116, 0.4)",
-    borderWidth: 1,
-  },
   clubGlyph: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Theme.surface,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.55)",
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Theme.line,
+    borderColor: "rgba(26,26,26,0.06)",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 2,
-    marginRight: 6,
+    marginTop: 4,
+    marginRight: 4,
   },
   clubGlyphActive: {
-    borderColor: "rgba(201, 165, 116, 0.65)",
-    backgroundColor: "rgba(201, 165, 116, 0.1)",
-    shadowColor: Theme.accentGold,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 2,
+    borderColor: "rgba(201, 165, 116, 0.35)",
+    backgroundColor: "rgba(201, 165, 116, 0.08)",
   },
   clubGlyphPressed: {
     opacity: 0.88,
@@ -1212,15 +1193,6 @@ const styles = StyleSheet.create({
   searchSectionWrap: {
     paddingTop: 8,
     paddingBottom: 4,
-  },
-  clubRoomWhisper: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: Theme.accentGold,
-    marginTop: 4,
-    marginBottom: 2,
-    letterSpacing: 0.25,
-    opacity: 0.92,
   },
   rowTitleRow: {
     flexDirection: "row",

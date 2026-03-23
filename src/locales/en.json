@@ -236,7 +236,7 @@
     "imageUrlsLabel": "Image URLs (comma or line)",
     "imageUrlsPh": "https://…",
     "privateTradeTitle": "Inner circle only",
-    "privateTradeSub": "Only visible to invited members in the inner circle.",
+    "privateTradeSub": "Hidden from the open marketplace – only in the personal view of invited users.",
     "publish": "Publish listing",
     "yearInvalid": "Invalid year.",
     "priceInvalid": "Invalid price.",
@@ -284,10 +284,10 @@
     "codePh": "ENTER CODE",
     "codeTooShort": "Please enter the full code.",
     "redeem": "Redeem code",
-    "success": "Welcome. Use the small icon near “New” at the top to open the inner circle.",
+    "success": "Welcome. Next to “New” there’s a subtle icon – only you see it.",
     "alreadyMember": "You’re already in.",
     "memberTitle": "You’re in",
-    "memberSub": "Tap the small sparkle next to “New” – only you see it.",
+    "memberSub": "Next to “New”: subtle icon to switch views.",
     "foot": "No code? Ask in the community or contact us via Profile → Support."
   },
   "home": {
@@ -301,9 +301,8 @@
     "greetingNightShort": "Good night",
     "dashboardTitle": "VUREX",
     "dashboardSubtitle": "Marketplace · browse and filter listings",
-    "clubRoomA11y": "Inner circle",
-    "clubRoomA11yHint": "Tap to switch between marketplace and inner circle.",
-    "clubRoomActiveHint": "Inner circle",
+    "clubLensA11y": "Personal view",
+    "clubLensA11yHint": "Switches your listing feed. Only visible to you.",
     "heroHeadline": "Marketplace",
     "heroTagline": "The platform for trading & collectible cards.",
     "kicker": "VUREX",
@@ -579,7 +578,13 @@
     "invitesCopyFailed": "Could not copy.",
     "invitesRedeemedBy": "Redeemed by",
     "invitesRedeemedEmpty": "No one yet.",
-    "openPrivateInvites": "Private trade invites"
+    "openPrivateInvites": "Private trade invites",
+    "invitesMetaHeader": "Audit",
+    "invitesCreatedAt": "Created",
+    "invitesCreatedBy": "Created by",
+    "invitesCreatorUnknown": "Unknown",
+    "invitesCreatorIdOnly": "User #{{id}}",
+    "invitesRevokedAt": "Revoked at"
   },
   "gate": {
     "updateTitle": "Update",
