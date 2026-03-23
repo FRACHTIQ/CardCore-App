@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import * as Clipboard from "expo-clipboard";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
@@ -78,6 +79,19 @@ export default function AdminPrivateInvitesScreen({ navigation }) {
     }, [isAdmin, load])
   );
 
+  async function copyToClipboard(code) {
+    const c = String(code || "").trim();
+    if (!c) {
+      return;
+    }
+    try {
+      await Clipboard.setStringAsync(c);
+      Alert.alert("", t("admin.invitesCopied"));
+    } catch {
+      Alert.alert(t("common.error"), t("admin.invitesCopyFailed"));
+    }
+  }
+
   async function createInvite() {
     if (!token) {
       return;
@@ -92,7 +106,15 @@ export default function AdminPrivateInvitesScreen({ navigation }) {
       const code = data?.invite?.code;
       await load();
       if (code) {
-        Alert.alert(t("admin.invitesCreatedTitle"), code);
+        Alert.alert(t("admin.invitesCreatedTitle"), code, [
+          {
+            text: t("admin.invitesCopy"),
+            onPress: () => {
+              copyToClipboard(code);
+            },
+          },
+          { text: t("common.ok"), style: "default" },
+        ]);
       }
     } catch (e) {
       Alert.alert(t("common.error"), e.message || "");
@@ -212,10 +234,29 @@ export default function AdminPrivateInvitesScreen({ navigation }) {
             const max =
               item.max_redemptions == null ? "∞" : String(item.max_redemptions);
             const revoked = Boolean(item.revoked_at);
+            const redemptions = Array.isArray(item.redemptions)
+              ? item.redemptions
+              : [];
             return (
               <View style={styles.card}>
                 <View style={styles.cardTop}>
-                  <Text style={styles.code}>{item.code}</Text>
+                  <Text style={styles.code} selectable>
+                    {item.code}
+                  </Text>
+                  <Pressable
+                    onPress={() => copyToClipboard(item.code)}
+                    style={({ pressed }) => [
+                      styles.iconBtn,
+                      pressed ? styles.iconBtnPressed : null,
+                    ]}
+                    accessibilityLabel={t("admin.invitesCopy")}
+                  >
+                    <Ionicons
+                      name="copy-outline"
+                      size={22}
+                      color={Theme.heroBg}
+                    />
+                  </Pressable>
                   {!revoked ? (
                     <Pressable
                       onPress={() => revokeInvite(item.id)}
@@ -248,6 +289,29 @@ export default function AdminPrivateInvitesScreen({ navigation }) {
                 {item.note ? (
                   <Text style={styles.metaSmall}>{item.note}</Text>
                 ) : null}
+
+                <Text style={styles.redeemSectionTitle}>
+                  {t("admin.invitesRedeemedBy")}
+                </Text>
+                {redemptions.length === 0 ? (
+                  <Text style={styles.redeemEmpty}>
+                    {t("admin.invitesRedeemedEmpty")}
+                  </Text>
+                ) : (
+                  redemptions.map((r) => (
+                    <View key={String(r.user_id)} style={styles.redeemRow}>
+                      <Text style={styles.redeemName} numberOfLines={1}>
+                        {String(r.display_name || "").trim() || "—"}
+                      </Text>
+                      <Text style={styles.redeemEmail} numberOfLines={1}>
+                        {r.email}
+                      </Text>
+                      <Text style={styles.redeemWhen}>
+                        {fmtDate(r.redeemed_at)}
+                      </Text>
+                    </View>
+                  ))
+                )}
               </View>
             );
           }}
@@ -321,7 +385,6 @@ const styles = StyleSheet.create({
   cardTop: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     marginBottom: 8,
   },
   code: {
@@ -330,7 +393,13 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     color: Theme.text,
     flex: 1,
+    minWidth: 0,
   },
+  iconBtn: {
+    padding: 8,
+    marginRight: 4,
+  },
+  iconBtnPressed: { opacity: 0.65 },
   revokeBtn: { paddingVertical: 4, paddingHorizontal: 8 },
   revokeText: { color: Theme.error, fontWeight: "700", fontSize: 14 },
   revokedPill: {
@@ -341,6 +410,40 @@ const styles = StyleSheet.create({
   },
   meta: { fontSize: 14, color: Theme.sub, fontWeight: "600" },
   metaSmall: { fontSize: 12, color: Theme.muted, marginTop: 4 },
+  redeemSectionTitle: {
+    marginTop: 12,
+    marginBottom: 6,
+    fontSize: 11,
+    fontWeight: "800",
+    color: Theme.muted,
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
+  },
+  redeemEmpty: {
+    fontSize: 13,
+    color: Theme.muted,
+    fontStyle: "italic",
+  },
+  redeemRow: {
+    paddingVertical: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Theme.line,
+  },
+  redeemName: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: Theme.text,
+  },
+  redeemEmail: {
+    fontSize: 13,
+    color: Theme.sub,
+    marginTop: 2,
+  },
+  redeemWhen: {
+    fontSize: 12,
+    color: Theme.muted,
+    marginTop: 4,
+  },
   back: { marginTop: 16 },
   backText: { color: Theme.heroBg, fontWeight: "700" },
 });

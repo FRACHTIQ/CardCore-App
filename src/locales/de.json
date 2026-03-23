@@ -574,6 +574,11 @@
     "invitesRevokeBody": "Neue Einlösungen sind danach nicht mehr möglich. Bereits eingelöste Zugänge bleiben.",
     "invitesRevokeOk": "Widerrufen",
     "invitesCreatedTitle": "Neuer Code",
+    "invitesCopy": "Kopieren",
+    "invitesCopied": "Code in die Zwischenablage kopiert.",
+    "invitesCopyFailed": "Kopieren nicht möglich.",
+    "invitesRedeemedBy": "Eingelöst von",
+    "invitesRedeemedEmpty": "Noch niemand.",
     "openPrivateInvites": "Private-Trade-Einladungen"
   },
   "gate": {

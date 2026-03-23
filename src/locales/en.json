@@ -574,6 +574,11 @@
     "invitesRevokeBody": "No new redemptions after that. Users who already redeemed keep access.",
     "invitesRevokeOk": "Revoke",
     "invitesCreatedTitle": "New code",
+    "invitesCopy": "Copy",
+    "invitesCopied": "Code copied to clipboard.",
+    "invitesCopyFailed": "Could not copy.",
+    "invitesRedeemedBy": "Redeemed by",
+    "invitesRedeemedEmpty": "No one yet.",
     "openPrivateInvites": "Private trade invites"
   },
   "gate": {
