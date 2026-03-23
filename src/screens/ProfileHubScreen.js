@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -22,6 +23,7 @@ import { profileInitial } from "../utils/profileInitial";
 import { pickProfileAvatarDataUrl } from "../utils/pickProfileAvatar";
 import { resolveUserAvatarUri } from "../utils/resolveUserAvatarUri";
 import { TeamAdminBadge } from "../components/TeamAdminBadge";
+import { VerifiedBadge } from "../components/VerifiedBadge";
 
 const APP_VERSION =
   Constants.expoConfig?.version ??
@@ -241,21 +243,7 @@ export default function ProfileHubScreen({ navigation }) {
             <Text style={styles.headerName} numberOfLines={2}>
               {displayName}
             </Text>
-            {meUser?.is_verified ? (
-              <View
-                style={styles.verifiedBadge}
-                accessibilityLabel={t("profile.verified")}
-              >
-                <Ionicons
-                  name="checkmark-circle"
-                  size={16}
-                  color={Theme.accentGreen}
-                />
-                <Text style={styles.verifiedBadgeText}>
-                  {t("profile.verified")}
-                </Text>
-              </View>
-            ) : null}
+            {meUser?.is_verified ? <VerifiedBadge /> : null}
             {isAdmin ? <TeamAdminBadge compact /> : null}
           </View>
           {meUser ? (
@@ -264,6 +252,18 @@ export default function ProfileHubScreen({ navigation }) {
             </Text>
           ) : null}
           <Text style={styles.avatarHint}>{t("profile.avatarHint")}</Text>
+          {meUser &&
+          Number(meUser.response_metric_samples) > 0 &&
+          meUser.avg_response_hours != null &&
+          !Number.isNaN(Number(meUser.avg_response_hours)) ? (
+            <Text style={styles.responseTimeHint}>
+              {t("profile.myResponseTime", {
+                hours: String(
+                  Math.round(Number(meUser.avg_response_hours) * 10) / 10
+                ).replace(/\.0$/, ""),
+              })}
+            </Text>
+          ) : null}
         </View>
       </View>
 
@@ -276,6 +276,13 @@ export default function ProfileHubScreen({ navigation }) {
               title={t("profile.menuAdmin")}
               subtitle={t("profile.menuAdminSub")}
               onPress={() => navigation.navigate("AdminPanel")}
+              isLast={false}
+            />
+            <MenuRow
+              icon="gift-outline"
+              title={t("admin.openPrivateInvites")}
+              subtitle={t("admin.invitesNew")}
+              onPress={() => navigation.navigate("AdminPrivateInvites")}
               isLast
             />
           </View>
@@ -289,6 +296,24 @@ export default function ProfileHubScreen({ navigation }) {
           title={t("profile.menuEditProfile")}
           subtitle={t("profile.menuEditProfileSub")}
           onPress={() => navigation.navigate("ProfileEdit")}
+          isLast={false}
+        />
+        <MenuRow
+          icon="pricetags-outline"
+          title={t("profile.menuMyListings")}
+          subtitle={t("profile.menuMyListingsSub")}
+          onPress={() => navigation.navigate("MyListings")}
+          isLast={false}
+        />
+        <MenuRow
+          icon="ticket-outline"
+          title={t("profile.menuPrivateTrade")}
+          subtitle={
+            meUser?.private_market_access
+              ? t("profile.menuPrivateTradeMemberSub")
+              : t("profile.menuPrivateTradeSub")
+          }
+          onPress={() => navigation.navigate("PrivateTradeInvite")}
           isLast={false}
         />
         <MenuRow
@@ -318,6 +343,17 @@ export default function ProfileHubScreen({ navigation }) {
               navigation.navigate("ProfilePublicUser", { userId: meId });
             }
           }}
+          isLast
+        />
+      </View>
+
+      <Text style={styles.sectionLabel}>{t("profile.sectionSafety")}</Text>
+      <View style={styles.menuCard}>
+        <MenuRow
+          icon="ban-outline"
+          title={t("profile.menuBlockedUsers")}
+          subtitle={t("profile.menuBlockedUsersSub")}
+          onPress={() => navigation.navigate("BlockedUsers")}
           isLast
         />
       </View>
@@ -441,28 +477,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     alignItems: "center",
-  },
-  verifiedBadge: {
-    marginLeft: 8,
-    marginTop: 2,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 999,
-    backgroundColor: "rgba(21,128,61,0.12)",
-  },
-  verifiedBadgeText: {
-    marginLeft: 4,
-    fontSize: 12,
-    fontWeight: "700",
-    color: Theme.accentGreen,
+    gap: 8,
   },
   avatarHint: {
     marginTop: 6,
     fontSize: 11,
     color: Theme.muted,
     lineHeight: 15,
+  },
+  responseTimeHint: {
+    marginTop: 8,
+    fontSize: 12,
+    color: Theme.sub,
+    lineHeight: 17,
   },
   headerEyebrow: {
     fontSize: 11,
@@ -477,6 +504,10 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: Theme.text,
     letterSpacing: -0.4,
+    lineHeight: 26,
+    ...Platform.select({
+      android: { includeFontPadding: false, textAlignVertical: "center" },
+    }),
   },
   headerEmail: {
     marginTop: 4,

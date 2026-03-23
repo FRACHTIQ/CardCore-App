@@ -706,6 +706,26 @@ export default function HomeScreen({ navigation }) {
         {token && !privateAccess ? (
           <Text style={styles.privateTradeHint}>{t("home.privateTradeHint")}</Text>
         ) : null}
+        {token && !privateAccess ? (
+          <Pressable
+            onPress={() =>
+              navigation
+                .getParent()
+                ?.navigate("Profile", { screen: "PrivateTradeInvite" })
+            }
+            style={({ pressed }) => [
+              styles.privateRedeemCta,
+              pressed ? styles.privateRedeemCtaPressed : null,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t("home.privateTradeRedeemCta")}
+          >
+            <Text style={styles.privateRedeemCtaText}>
+              {t("home.privateTradeRedeemCta")}
+            </Text>
+            <Ionicons name="chevron-forward" size={18} color={Theme.heroBg} />
+          </Pressable>
+        ) : null}
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
@@ -1225,8 +1245,23 @@ const styles = StyleSheet.create({
   privateTradeHint: {
     fontSize: 12,
     color: Theme.muted,
-    marginBottom: 10,
+    marginBottom: 6,
     lineHeight: 17,
+  },
+  privateRedeemCta: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    marginBottom: 12,
+    paddingVertical: 6,
+    paddingRight: 4,
+  },
+  privateRedeemCtaPressed: { opacity: 0.75 },
+  privateRedeemCtaText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: Theme.heroBg,
+    marginRight: 2,
   },
   rowTitleRow: {
     flexDirection: "row",

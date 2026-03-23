@@ -271,7 +271,24 @@
   "nav": {
     "new": "Neu",
     "listing": "Listing",
-    "newListing": "Neues Listing"
+    "newListing": "Neues Listing",
+    "privateTradeInvite": "Private Trade · Einladung"
+  },
+  "privateInvite": {
+    "title": "Private Trade",
+    "lead": "Ein geschlossener Bereich für verifizierte Community und bessere Deals – nur mit persönlicher Einladung.",
+    "bullet1": "· Du erhältst einen Code von einem bestehenden Mitglied oder vom VUREX-Team.",
+    "bullet2": "· Jeder Account kann nur einmal einen Code einlösen.",
+    "bullet3": "· Geteilte Codes sind persönlich – bitte nicht öffentlich posten.",
+    "codeLabel": "Einladungscode",
+    "codePh": "CODE HIER EINGEBEN",
+    "codeTooShort": "Bitte den vollständigen Code eingeben.",
+    "redeem": "Code einlösen",
+    "success": "Willkommen im Private Trade. Du kannst jetzt den privaten Feed nutzen und private Listings erstellen.",
+    "alreadyMember": "Du hast bereits Zugang zum Private Trade.",
+    "memberTitle": "Du bist dabei",
+    "memberSub": "Du hast Zugang zum Private Trade. Wechsel im Marktplatz auf „Private Trade“.",
+    "foot": "Keinen Code? Frag in der Community nach oder schreib uns über den Support im Profil."
   },
   "home": {
     "greetingMorning": "Guten Morgen, {{name}}",
@@ -286,7 +303,8 @@
     "dashboardSubtitle": "Marktplatz · Listings durchsuchen und filtern",
     "feedPublic": "Öffentlich",
     "feedPrivate": "Private Trade",
-    "privateTradeHint": "Private Trade ist nur mit Zugang verfügbar. Ein Admin kann „private_market_access“ für dein Konto setzen.",
+    "privateTradeHint": "Nur auf Einladung. Code von einem Mitglied oder vom Team – unten einlösen.",
+    "privateTradeRedeemCta": "Einladungscode einlösen",
     "privateTradeSignIn": "Melde dich an, um Private Trade zu nutzen.",
     "heroHeadline": "Marktplatz",
     "heroTagline": "Die Plattform für Trading & Sammelkarten.",
@@ -362,6 +380,9 @@
     "menuEditProfileSub": "Name, Bio, Sprache",
     "menuMyListings": "Meine Angebote",
     "menuMyListingsSub": "Aktive Karten im Marktplatz",
+    "menuPrivateTrade": "Private Trade · Einladung",
+    "menuPrivateTradeSub": "Code einlösen oder Status ansehen",
+    "menuPrivateTradeMemberSub": "Du hast Zugang",
     "myListingsEmpty": "Noch keine aktiven Angebote. Erstelle im Marktplatz ein neues Listing.",
     "myListingsNewButton": "Neues Listing",
     "sectionSafety": "Sicherheit",
@@ -543,7 +564,19 @@
     "supportEmpty": "Keine Tickets.",
     "supportUser": "Nutzer",
     "supportStatus": "Status",
-    "supportReplyAsStaff": "Antwort (Support)"
+    "supportReplyAsStaff": "Antwort (Support)",
+    "invitesTitle": "Private-Trade-Codes",
+    "invitesNew": "Neuen Code (1×)",
+    "invitesEmpty": "Noch keine Codes.",
+    "invitesUses": "{{n}} / {{max}} Einlösungen",
+    "invitesExpires": "Ablauf",
+    "invitesRevoke": "Widerrufen",
+    "invitesRevoked": "Widerrufen",
+    "invitesRevokeTitle": "Code widerrufen?",
+    "invitesRevokeBody": "Neue Einlösungen sind danach nicht mehr möglich. Bereits eingelöste Zugänge bleiben.",
+    "invitesRevokeOk": "Widerrufen",
+    "invitesCreatedTitle": "Neuer Code",
+    "openPrivateInvites": "Private-Trade-Einladungen"
   },
   "gate": {
     "updateTitle": "Update",

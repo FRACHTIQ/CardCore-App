@@ -271,7 +271,24 @@
   "nav": {
     "new": "New",
     "listing": "Listing",
-    "newListing": "New listing"
+    "newListing": "New listing",
+    "privateTradeInvite": "Private trade · Invite"
+  },
+  "privateInvite": {
+    "title": "Private trade",
+    "lead": "A closed area for trusted sellers and serious buyers – personal invite only.",
+    "bullet1": "· You receive a code from an existing member or the VUREX team.",
+    "bullet2": "· Each account can redeem only one code.",
+    "bullet3": "· Treat shared codes as personal – don’t post them publicly.",
+    "codeLabel": "Invite code",
+    "codePh": "ENTER CODE",
+    "codeTooShort": "Please enter the full code.",
+    "redeem": "Redeem code",
+    "success": "Welcome to private trade. You can open the private feed and list private items.",
+    "alreadyMember": "You already have access to private trade.",
+    "memberTitle": "You’re in",
+    "memberSub": "Switch the marketplace tab to “Private trade” to use it.",
+    "foot": "No code? Ask in the community or contact us via Profile → Support."
   },
   "home": {
     "greetingMorning": "Good morning, {{name}}",
@@ -286,7 +303,8 @@
     "dashboardSubtitle": "Marketplace · browse and filter listings",
     "feedPublic": "Public",
     "feedPrivate": "Private trade",
-    "privateTradeHint": "Private trade requires access. An admin can enable “private_market_access” on your account.",
+    "privateTradeHint": "Invite-only. Get a code from a member or the team – redeem below.",
+    "privateTradeRedeemCta": "Redeem invite code",
     "privateTradeSignIn": "Sign in to use private trade.",
     "heroHeadline": "Marketplace",
     "heroTagline": "The platform for trading & collectible cards.",
@@ -362,6 +380,9 @@
     "menuEditProfileSub": "Name, bio, language",
     "menuMyListings": "My listings",
     "menuMyListingsSub": "Your active marketplace cards",
+    "menuPrivateTrade": "Private trade · Invite",
+    "menuPrivateTradeSub": "Redeem a code or see your status",
+    "menuPrivateTradeMemberSub": "You have access",
     "myListingsEmpty": "No active listings yet. Create one from the marketplace tab.",
     "myListingsNewButton": "New listing",
     "sectionSafety": "Safety",
@@ -543,7 +564,19 @@
     "supportEmpty": "No tickets.",
     "supportUser": "User",
     "supportStatus": "Status",
-    "supportReplyAsStaff": "Reply (support)"
+    "supportReplyAsStaff": "Reply (support)",
+    "invitesTitle": "Private trade invites",
+    "invitesNew": "New code (1×)",
+    "invitesEmpty": "No codes yet.",
+    "invitesUses": "{{n}} / {{max}} redemptions",
+    "invitesExpires": "Expires",
+    "invitesRevoke": "Revoke",
+    "invitesRevoked": "Revoked",
+    "invitesRevokeTitle": "Revoke code?",
+    "invitesRevokeBody": "No new redemptions after that. Users who already redeemed keep access.",
+    "invitesRevokeOk": "Revoke",
+    "invitesCreatedTitle": "New code",
+    "openPrivateInvites": "Private trade invites"
   },
   "gate": {
     "updateTitle": "Update",

@@ -17,6 +17,12 @@ import AdminReportsListScreen from "../screens/AdminReportsListScreen";
 import AdminReportDetailScreen from "../screens/AdminReportDetailScreen";
 import DealsListScreen from "../screens/DealsListScreen";
 import DealDetailScreen from "../screens/DealDetailScreen";
+import MyListingsScreen from "../screens/MyListingsScreen";
+import ListingDetailScreen from "../screens/ListingDetailScreen";
+import CreateListingScreen from "../screens/CreateListingScreen";
+import BlockedUsersScreen from "../screens/BlockedUsersScreen";
+import PrivateTradeInviteScreen from "../screens/PrivateTradeInviteScreen";
+import AdminPrivateInvitesScreen from "../screens/AdminPrivateInvitesScreen";
 
 const ProfileStack = createNativeStackNavigator();
 
@@ -38,6 +44,26 @@ export function ProfileStackNavigator() {
         name="ProfileShipping"
         component={ProfileShippingScreen}
         options={{ title: t("profile.tradeSection") }}
+      />
+      <ProfileStack.Screen
+        name="MyListings"
+        component={MyListingsScreen}
+        options={{ title: t("profile.menuMyListings") }}
+      />
+      <ProfileStack.Screen
+        name="ListingDetail"
+        component={ListingDetailScreen}
+        options={{ title: t("nav.listing") }}
+      />
+      <ProfileStack.Screen
+        name="CreateListing"
+        component={CreateListingScreen}
+        options={{ title: t("nav.newListing") }}
+      />
+      <ProfileStack.Screen
+        name="BlockedUsers"
+        component={BlockedUsersScreen}
+        options={{ title: t("profile.menuBlockedUsers") }}
       />
       <ProfileStack.Screen
         name="DealsList"
@@ -89,6 +115,16 @@ export function ProfileStackNavigator() {
         name="AdminPanel"
         component={AdminPanelScreen}
         options={{ title: t("admin.title") }}
+      />
+      <ProfileStack.Screen
+        name="AdminPrivateInvites"
+        component={AdminPrivateInvitesScreen}
+        options={{ headerShown: false }}
+      />
+      <ProfileStack.Screen
+        name="PrivateTradeInvite"
+        component={PrivateTradeInviteScreen}
+        options={{ title: t("nav.privateTradeInvite") }}
       />
       <ProfileStack.Screen
         name="AdminSupportList"
