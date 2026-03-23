@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import {
   ActivityIndicator,
@@ -19,6 +19,7 @@ import { CARD_TYPES } from "../config";
 import { Theme } from "../theme";
 import { api, analyzeCardImages } from "../api";
 import { useAuth } from "../AuthContext";
+import { filterListingImageUrls } from "../utils/listingImages";
 
 /** Data-URL-Obergrenze pro Bild (Server/DB); ~entspricht großem JPEG in Base64 */
 const MAX_LISTING_COVER_DATA_URL_CHARS = 1_200_000;
@@ -84,9 +85,144 @@ export default function CreateListingScreen({ navigation, route }) {
   const [front, setFront] = useState(null);
   const [back, setBack] = useState(null);
   const [analyzeBusy, setAnalyzeBusy] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [editLoading, setEditLoading] = useState(false);
+  const prevRouteListingIdRef = useRef(null);
+
+  function resetEmptyForm() {
+    setSport("");
+    setManufacturer("");
+    setSetName("");
+    setYear(String(new Date().getFullYear()));
+    setPlayerName("");
+    setTeam("");
+    setCardNumber("");
+    setCardType("BASE");
+    setConditionGrade("");
+    setPriceEuro("");
+    setIsGraded(false);
+    setGradingCompany("");
+    setGradingGrade("");
+    setShippingIncluded(false);
+    setShippingEuro("");
+    setMarketValueEuro("");
+    setMarketValueSource("");
+    setDescription("");
+    setImageUrlsRaw("");
+    setFront(null);
+    setBack(null);
+    setIsPrivateMarket(false);
+    setError("");
+  }
+
+  function hydrateFromListing(row) {
+    setSport(String(row.sport || "").trim());
+    setManufacturer(String(row.manufacturer || "").trim());
+    setSetName(String(row.set_name || "").trim());
+    setYear(row.year != null ? String(row.year) : String(new Date().getFullYear()));
+    setPlayerName(String(row.player_name || "").trim());
+    setTeam(String(row.team || "").trim());
+    setCardNumber(String(row.card_number || "").trim());
+    const ct = String(row.card_type || "BASE").toUpperCase();
+    setCardType(CARD_TYPES.includes(ct) ? ct : "BASE");
+    setConditionGrade(String(row.condition_grade || "").trim());
+    setPriceEuro(
+      row.price_cents != null && Number.isFinite(Number(row.price_cents))
+        ? (Number(row.price_cents) / 100).toFixed(2)
+        : ""
+    );
+    setDescription(String(row.description || ""));
+    const urls = Array.isArray(row.image_urls) ? row.image_urls : [];
+    setImageUrlsRaw(urls.length ? urls.join("\n") : "");
+    setIsGraded(Boolean(row.is_graded));
+    setGradingCompany(String(row.grading_company || "").trim());
+    setGradingGrade(String(row.grading_grade || "").trim());
+    setShippingIncluded(Boolean(row.shipping_included));
+    setShippingEuro(
+      row.shipping_cost_cents != null &&
+      Number.isFinite(Number(row.shipping_cost_cents))
+        ? (Number(row.shipping_cost_cents) / 100).toFixed(2)
+        : ""
+    );
+    setMarketValueEuro(
+      row.market_value_cents != null &&
+      Number.isFinite(Number(row.market_value_cents))
+        ? (Number(row.market_value_cents) / 100).toFixed(2)
+        : ""
+    );
+    setMarketValueSource(String(row.market_value_source || "").trim());
+    setIsPrivateMarket(Boolean(row.is_private_market));
+    setFront(null);
+    setBack(null);
+  }
+
+  useEffect(() => {
+    const rawId = route.params?.listingId;
+    const hasId =
+      rawId !== undefined && rawId !== null && String(rawId).trim() !== "";
+    const idKey = hasId ? String(rawId).trim() : null;
+    const prevKey = prevRouteListingIdRef.current;
+    prevRouteListingIdRef.current = idKey;
+
+    if (!hasId) {
+      setEditingId(null);
+      if (prevKey !== null) {
+        resetEmptyForm();
+      }
+      return;
+    }
+
+    const idNum = Number(rawId);
+    if (!token || !Number.isInteger(idNum) || idNum < 1) {
+      setEditingId(null);
+      return;
+    }
+    let cancelled = false;
+    setEditLoading(true);
+    setError("");
+    (async () => {
+      try {
+        const data = await api(`/api/listings/${idNum}`, { token });
+        if (cancelled) {
+          return;
+        }
+        const row = data?.listing;
+        if (!row) {
+          setError(t("listing.notFound"));
+          setEditingId(null);
+          resetEmptyForm();
+          return;
+        }
+        hydrateFromListing(row);
+        setEditingId(idNum);
+      } catch (e) {
+        if (!cancelled) {
+          setError(e.message || t("common.error"));
+          setEditingId(null);
+          resetEmptyForm();
+        }
+      } finally {
+        if (!cancelled) {
+          setEditLoading(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [route.params?.listingId, token]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: editingId != null ? t("nav.editListing") : t("nav.newListing"),
+    });
+  }, [navigation, t, editingId]);
 
   useEffect(() => {
     const p = route?.params || {};
+    if (p.listingId !== undefined && p.listingId !== null && p.listingId !== "") {
+      return;
+    }
     if (p.scannedFront?.base64 && p.scannedFront?.uri) {
       setFront(p.scannedFront);
     }
@@ -157,6 +293,15 @@ export default function CreateListingScreen({ navigation, route }) {
       if (data.card_type && CARD_TYPES.includes(data.card_type)) {
         setCardType(data.card_type);
       }
+      if (
+        data.market_value_eur != null &&
+        Number.isFinite(Number(data.market_value_eur))
+      ) {
+        setMarketValueEuro(String(Number(data.market_value_eur)));
+      }
+      if (data.market_value_source != null && String(data.market_value_source).trim()) {
+        setMarketValueSource(String(data.market_value_source).trim());
+      }
     } catch (e) {
       setError(e.message || t("common.error"));
     } finally {
@@ -203,20 +348,23 @@ export default function CreateListingScreen({ navigation, route }) {
       marketValueCents = Math.round(mvEur * 100);
     }
 
-    let imageUrls = imageUrlsRaw
-      .split(/[\n,]/)
-      .map((s) => s.trim())
-      .filter(Boolean);
+    let imageUrls = filterListingImageUrls(
+      imageUrlsRaw
+        .split(/[\n,]/)
+        .map((s) => s.trim())
+        .filter(Boolean)
+    );
 
-    /* Scan-Fotos werden sonst nur für die KI genutzt – ohne URL-Feld erscheint ein Platzhalter. */
-    if (imageUrls.length === 0 && front?.base64) {
+    /* Scan-Vorderseite immer als erstes Cover, sonst bleibt z. B. eine Stock-URL aus dem URL-Feld sichtbar. */
+    if (front?.base64) {
       const mime = String(front.mime || "image/jpeg").trim() || "image/jpeg";
       const dataUrl = `data:${mime};base64,${front.base64}`;
       if (dataUrl.length > MAX_LISTING_COVER_DATA_URL_CHARS) {
         setError(t("createListing.coverFromScanTooLarge"));
         return;
       }
-      imageUrls = [dataUrl];
+      imageUrls = imageUrls.filter((u) => u !== dataUrl);
+      imageUrls = [dataUrl, ...imageUrls];
     }
 
     setLoading(true);
@@ -484,6 +632,7 @@ export default function CreateListingScreen({ navigation, route }) {
         placeholderTextColor={Theme.muted}
       />
       <Text style={styles.label}>{t("createListing.imageUrlsLabel")}</Text>
+      <Text style={styles.coverScanHint}>{t("createListing.coverScanHint")}</Text>
       <TextInput
         style={[styles.input, styles.multiline]}
         value={imageUrlsRaw}
@@ -536,6 +685,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Theme.muted,
     lineHeight: 18,
+  },
+  coverScanHint: {
+    marginTop: 4,
+    marginBottom: 10,
+    fontSize: 12,
+    color: Theme.muted,
+    lineHeight: 17,
   },
   photoRow: {
     flexDirection: "row",
