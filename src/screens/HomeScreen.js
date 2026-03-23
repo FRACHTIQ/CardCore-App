@@ -164,6 +164,12 @@ export default function HomeScreen({ navigation }) {
   }, [token]);
 
   useEffect(() => {
+    if (token && meUser && !meUser.private_market_access) {
+      setFeedScope("public");
+    }
+  }, [token, meUser?.private_market_access]);
+
+  useEffect(() => {
     const id = setInterval(() => {
       setTimeTick((n) => n + 1);
     }, 60000);
@@ -621,11 +627,37 @@ export default function HomeScreen({ navigation }) {
             {t("home.dashboardSubtitle")}
           </Text>
         </View>
+        {privateAccess ? (
+          <Pressable
+            style={({ pressed }) => [
+              styles.clubGlyph,
+              feedScope === "private" ? styles.clubGlyphActive : null,
+              pressed ? styles.clubGlyphPressed : null,
+            ]}
+            onPress={() =>
+              setFeedScope((s) => (s === "public" ? "private" : "public"))
+            }
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={t("home.clubRoomA11y")}
+            accessibilityHint={t("home.clubRoomA11yHint")}
+            accessibilityState={{ selected: feedScope === "private" }}
+          >
+            <Ionicons
+              name="sparkles"
+              size={19}
+              color={
+                feedScope === "private" ? Theme.accentGold : Theme.muted
+              }
+            />
+          </Pressable>
+        ) : null}
         <Pressable
           onPress={() => navigation.navigate("CreateListing")}
           style={({ pressed }) => [
             styles.dashPlusBtn,
             pressed ? styles.dashPlusBtnPressed : null,
+            privateAccess ? styles.dashPlusBtnAfterClub : null,
           ]}
           hitSlop={8}
           accessibilityRole="button"
@@ -635,7 +667,14 @@ export default function HomeScreen({ navigation }) {
         </Pressable>
       </View>
 
-      <View style={styles.balanceCard}>
+      <View
+        style={[
+          styles.balanceCard,
+          privateAccess && feedScope === "private"
+            ? styles.balanceCardClub
+            : null,
+        ]}
+      >
         <View style={styles.balanceCardTitleRow}>
           <Text style={styles.balanceLabel}>{t("home.portfolioLabel")}</Text>
           <View style={styles.balanceTrendPill}>
@@ -656,77 +695,6 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.dashDivider} />
 
       <View style={styles.searchSectionWrap}>
-        <View style={styles.feedSegment}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.feedSegBtn,
-              feedScope === "public" ? styles.feedSegBtnOn : null,
-              pressed ? styles.feedSegBtnPressed : null,
-            ]}
-            onPress={() => setFeedScope("public")}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: feedScope === "public" }}
-          >
-            <Text
-              style={
-                feedScope === "public"
-                  ? styles.feedSegTextOn
-                  : styles.feedSegText
-              }
-            >
-              {t("home.feedPublic")}
-            </Text>
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [
-              styles.feedSegBtn,
-              feedScope === "private" ? styles.feedSegBtnOn : null,
-              (!token || !privateAccess) ? styles.feedSegBtnDisabled : null,
-              pressed && token && privateAccess ? styles.feedSegBtnPressed : null,
-            ]}
-            disabled={!token || !privateAccess}
-            onPress={() => setFeedScope("private")}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: feedScope === "private" }}
-          >
-            <Text
-              style={
-                feedScope === "private"
-                  ? styles.feedSegTextOn
-                  : styles.feedSegText
-              }
-            >
-              {t("home.feedPrivate")}
-            </Text>
-          </Pressable>
-        </View>
-        {!token ? (
-          <Text style={styles.privateTradeHint}>{t("home.privateTradeSignIn")}</Text>
-        ) : null}
-        {token && !privateAccess ? (
-          <Text style={styles.privateTradeHint}>{t("home.privateTradeHint")}</Text>
-        ) : null}
-        {token && !privateAccess ? (
-          <Pressable
-            onPress={() =>
-              navigation
-                .getParent()
-                ?.navigate("Profile", { screen: "PrivateTradeInvite" })
-            }
-            style={({ pressed }) => [
-              styles.privateRedeemCta,
-              pressed ? styles.privateRedeemCtaPressed : null,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={t("home.privateTradeRedeemCta")}
-          >
-            <Text style={styles.privateRedeemCtaText}>
-              {t("home.privateTradeRedeemCta")}
-            </Text>
-            <Ionicons name="chevron-forward" size={18} color={Theme.heroBg} />
-          </Pressable>
-        ) : null}
-
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <View style={styles.searchBarPill}>
@@ -751,6 +719,11 @@ export default function HomeScreen({ navigation }) {
         <Text style={styles.searchMetaLine}>
           {t("home.offersCountLabel", { count: total })}
         </Text>
+        {privateAccess && feedScope === "private" ? (
+          <Text style={styles.clubRoomWhisper}>
+            {t("home.clubRoomActiveHint")}
+          </Text>
+        ) : null}
       </View>
 
       {highlightItems.length > 0 ? (
@@ -1097,6 +1070,34 @@ const styles = StyleSheet.create({
     marginTop: 8,
     lineHeight: 17,
   },
+  balanceCardClub: {
+    borderColor: "rgba(201, 165, 116, 0.4)",
+    borderWidth: 1,
+  },
+  clubGlyph: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Theme.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Theme.line,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2,
+    marginRight: 6,
+  },
+  clubGlyphActive: {
+    borderColor: "rgba(201, 165, 116, 0.65)",
+    backgroundColor: "rgba(201, 165, 116, 0.1)",
+    shadowColor: Theme.accentGold,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  clubGlyphPressed: {
+    opacity: 0.88,
+  },
   dashPlusBtn: {
     width: 44,
     height: 44,
@@ -1107,6 +1108,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 2,
+  },
+  dashPlusBtnAfterClub: {
+    marginLeft: 0,
   },
   dashPlusBtnPressed: {
     backgroundColor: Theme.soft,
@@ -1209,59 +1213,14 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 4,
   },
-  feedSegment: {
-    flexDirection: "row",
-    backgroundColor: Theme.soft,
-    borderRadius: 12,
-    padding: 3,
-    marginBottom: 12,
-  },
-  feedSegBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  feedSegBtnOn: {
-    backgroundColor: Theme.surface,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  feedSegBtnDisabled: { opacity: 0.45 },
-  feedSegBtnPressed: { opacity: 0.88 },
-  feedSegText: {
-    fontSize: 13,
+  clubRoomWhisper: {
+    fontSize: 11,
     fontWeight: "600",
-    color: Theme.sub,
-  },
-  feedSegTextOn: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: Theme.text,
-  },
-  privateTradeHint: {
-    fontSize: 12,
-    color: Theme.muted,
-    marginBottom: 6,
-    lineHeight: 17,
-  },
-  privateRedeemCta: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "flex-start",
-    marginBottom: 12,
-    paddingVertical: 6,
-    paddingRight: 4,
-  },
-  privateRedeemCtaPressed: { opacity: 0.75 },
-  privateRedeemCtaText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: Theme.heroBg,
-    marginRight: 2,
+    color: Theme.accentGold,
+    marginTop: 4,
+    marginBottom: 2,
+    letterSpacing: 0.25,
+    opacity: 0.92,
   },
   rowTitleRow: {
     flexDirection: "row",
@@ -1275,16 +1234,18 @@ const styles = StyleSheet.create({
   privateBadge: {
     marginLeft: 8,
     marginTop: 2,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 6,
-    backgroundColor: Theme.heroBg,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 5,
+    backgroundColor: "rgba(201, 165, 116, 0.18)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(201, 165, 116, 0.45)",
   },
   privateBadgeText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "800",
-    color: "#f4d03f",
-    letterSpacing: 0.2,
+    color: "#8a7036",
+    letterSpacing: 0.35,
   },
   /** Nur die Suchzeile als Pille — Chips und Meta liegen außerhalb, wirkt luftiger. */
   searchBarPill: {
